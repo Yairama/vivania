@@ -1,3 +1,4 @@
+# core/mine_map.py (Mejorado con velocidades variables)
 import random
 from core.node import Node
 from core.segment import Segment
@@ -8,9 +9,17 @@ class MineMap:
         self._create_map()
 
     def _create_map(self):
-        def connect(n1, n2):
+        def connect(n1, n2, empty_speed=None, loaded_speed=None):
+            """Conecta dos nodos con velocidades específicas"""
             if (n1.name, n2.name) not in [(s.origin.name, s.destination.name) for s in n1.segments]:
-                Segment(n1, n2, random.uniform(24., 30.))
+                # Calcular distancia euclidiana
+                distance = ((n2.x - n1.x)**2 + (n2.y - n1.y)**2)**0.5
+                
+                # Asignar velocidades basadas en el tipo de ruta si no se especifican
+                if empty_speed is None or loaded_speed is None:
+                    empty_speed, loaded_speed = self._get_route_speeds(n1.name, n2.name, distance)
+                
+                Segment(n1, n2, distance, empty_speed, loaded_speed)
 
         nodes = {
             'parking': Node('parking', 91, 926),
@@ -40,19 +49,125 @@ class MineMap:
             'c6': Node('c6', 359, 618)
         }
 
+        # Conexiones con velocidades específicas por tipo de ruta
         connections = [
-            ('parking', 'n2'), ('n1', 'n2'), ('crusher', 'n1'),
-            ('n2', 'n3'), ('n3', 'n4'), ('n4', 'n5'),
-            ('n5', 'dump_zone'), ('n5', 'c1'), ('n5', 'n6'),
-            ('n6', 'n7'), ('n7', 'n8'), ('n8', 'n9'), ('n8', 'c2'),
-            ('n9', 'c3'), ('n9', 'n10'), ('n10', 'n11'),
-            ('n11', 'n12'), ('n12', 'n13'), ('n12', 'n14'),
-            ('n13', 'c4'), ('n14', 'n15'), ('n15', 'n16'),
-            ('n16', 'c5'), ('n16', 'c6')
+            # Rutas principales (más rápidas)
+            ('parking', 'n2', 35, 20),
+            ('n1', 'n2', 40, 25),
+            ('crusher', 'n1', 30, 18),
+            
+            # Rutas secundarias (velocidad media)
+            ('n2', 'n3', 28, 16),
+            ('n3', 'n4', 25, 15),
+            ('n4', 'n5', 30, 18),
+            ('n5', 'dump_zone', 35, 20),
+            
+            # Rutas de acceso a palas (más lentas por maniobras)
+            ('n5', 'c1', 20, 12),
+            ('n8', 'c2', 18, 10),
+            ('n9', 'c3', 22, 13),
+            ('n13', 'c4', 20, 12),
+            ('n16', 'c5', 18, 11),
+            ('n16', 'c6', 19, 11),
+            
+            # Rutas internas (velocidad variable)
+            ('n5', 'n6', 32, 19),
+            ('n6', 'n7', 28, 17),
+            ('n7', 'n8', 26, 15),
+            ('n8', 'n9', 30, 18),
+            ('n9', 'n10', 24, 14),
+            ('n10', 'n11', 27, 16),
+            ('n11', 'n12', 29, 17),
+            ('n12', 'n13', 31, 18),
+            ('n12', 'n14', 25, 15),
+            ('n14', 'n15', 28, 16),
+            ('n15', 'n16', 26, 15),
         ]
 
-        for n1, n2 in connections:
-            connect(nodes[n1], nodes[n2])
-            connect(nodes[n2], nodes[n1])  # bidireccional
+        # Crear conexiones bidireccionales
+        for connection in connections:
+            if len(connection) == 3:
+                n1_name, n2_name, speed = connection
+                empty_speed = speed
+                loaded_speed = int(speed * 0.6)  # Cargado es 60% de la velocidad vacío
+            elif len(connection) == 4:
+                n1_name, n2_name, empty_speed, loaded_speed = connection
+            else:
+                n1_name, n2_name = connection
+                empty_speed, loaded_speed = None, None
+                
+            connect(nodes[n1_name], nodes[n2_name], empty_speed, loaded_speed)
+            connect(nodes[n2_name], nodes[n1_name], empty_speed, loaded_speed)
 
         self.nodes = nodes
+        
+        # Imprimir información de velocidades para debug
+        self._print_speed_info()
+
+    def _get_route_speeds(self, node1_name, node2_name, distance):
+        """Determina velocidades basadas en el tipo de ruta"""
+        
+        # Rutas hacia/desde palas (más lentas)
+        if any(name.startswith('c') for name in [node1_name, node2_name]):
+            empty_speed = random.uniform(18, 25)
+            loaded_speed = random.uniform(10, 15)
+        
+        # Rutas principales (parking, crusher, dump_zone)
+        elif any(name in ['parking', 'crusher', 'dump_zone'] for name in [node1_name, node2_name]):
+            empty_speed = random.uniform(30, 40)
+            loaded_speed = random.uniform(18, 25)
+        
+        # Rutas internas (velocidad media)
+        else:
+            empty_speed = random.uniform(25, 35)
+            loaded_speed = random.uniform(15, 20)
+            
+        return empty_speed, loaded_speed
+
+    def _print_speed_info(self):
+        """Imprime información de velocidades para debug"""
+        print("\n=== INFORMACIÓN DE VELOCIDADES ===")
+        
+        # Categorizar segmentos por velocidad
+        fast_segments = []
+        medium_segments = []
+        slow_segments = []
+        
+        for node in self.nodes.values():
+            for segment in node.segments:
+                speed_info = {
+                    'route': f"{segment.origin.name} -> {segment.destination.name}",
+                    'empty_speed': segment.empty_speed,
+                    'loaded_speed': segment.loaded_speed,
+                    'distance': segment.distance
+                }
+                
+                if segment.empty_speed >= 30:
+                    fast_segments.append(speed_info)
+                elif segment.empty_speed >= 25:
+                    medium_segments.append(speed_info)
+                else:
+                    slow_segments.append(speed_info)
+        
+        print(f"Rutas rápidas ({len(fast_segments)}): velocidad vacío ≥ 30 km/h")
+        for seg in fast_segments[:5]:  # Mostrar solo primeras 5
+            print(f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h")
+        
+        print(f"Rutas medias ({len(medium_segments)}): 25-30 km/h")
+        for seg in medium_segments[:3]:
+            print(f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h")
+            
+        print(f"Rutas lentas ({len(slow_segments)}): velocidad vacío < 25 km/h")
+        for seg in slow_segments[:3]:
+            print(f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h")
+            
+    def get_segment_between(self, node1_name, node2_name):
+        """Obtiene el segmento entre dos nodos"""
+        node1 = self.nodes.get(node1_name)
+        if not node1:
+            return None
+            
+        for segment in node1.segments:
+            if segment.destination.name == node2_name:
+                return segment
+        return None
