@@ -1,22 +1,33 @@
+# core/dump.py (Mejorado)
 class Dump:
     def __init__(self, node, process_time=4):
         self.node = node
+        self.process_time = process_time
+        
         self.queue = []
         self.current_truck = None
         self.timer = 0
-        self.process_time = process_time
-
+        self.total_dumped = 0
+        
     def update(self):
         if not self.current_truck and self.queue:
             self.current_truck = self.queue.pop(0)
+            self.current_truck.start_dumping()
             self.timer = self.process_time
-
+            
         if self.current_truck:
             self.timer -= 1
             if self.timer <= 0:
-                self.current_truck.loading = False
-                self.current_truck.task = "returning"
+                # Registrar material descargado
+                self.total_dumped += self.current_truck.current_load
+                self.current_truck.finish_dumping()
                 self.current_truck = None
-
+                
     def request_dump(self, truck):
-        self.queue.append(truck)
+        if truck not in self.queue and truck.task == "waiting_dump":
+            self.queue.append(truck)
+            
+    def can_accept_truck(self):
+        """Verifica si el dump puede aceptar más camiones"""
+        return len(self.queue) < 2
+
