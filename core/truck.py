@@ -27,7 +27,7 @@ class Truck:
         self.x = position.x
         self.y = position.y
         
-        print(f"Camión {self.id} creado en {position.name}")
+
         
     def assign_route(self, route):
         """Asigna una nueva ruta al camión"""
@@ -36,7 +36,7 @@ class Truck:
             self.route_index = 0
             self.target_node_name = route[1] if len(route) > 1 else None
             self.movement_timer = 30  # Tiempo fijo para llegar al siguiente nodo
-            print(f"Camión {self.id}: Nueva ruta {route}, primer objetivo: {self.target_node_name}")
+
     
     def update_movement(self, mine_map, dt=1.0):
         """Actualiza el movimiento del camión"""
@@ -72,14 +72,14 @@ class Truck:
             self.y = self.position.y
             self.route_index += 1
             
-            print(f"Camión {self.id} llegó a {self.target_node_name}")
+
             
             # Verificar si hay más nodos en la ruta
             if self.route_index < len(self.route) - 1:
                 # Hay más nodos, continuar movimiento
                 self.target_node_name = self.route[self.route_index + 1]
                 self.movement_timer = 30  # Tiempo para el siguiente segmento
-                print(f"Camión {self.id} continúa hacia {self.target_node_name}")
+
             else:
                 # Llegó al destino final
                 self.target_node_name = None
@@ -89,35 +89,30 @@ class Truck:
                 
     def _arrived_at_destination(self):
         """Maneja la llegada al destino"""
-        print(f"Camión {self.id} llegó al destino final: {self.position.name}")
-        
         if self.task == "moving_to_shovel":
             self.task = "waiting_shovel"
-            print(f"Camión {self.id} esperando en pala")
         elif self.task == "moving_to_dump":
             self.task = "waiting_dump"
-            print(f"Camión {self.id} esperando descarga")
         elif self.task == "returning":
             self.task = "waiting_assignment"
-            print(f"Camión {self.id} disponible para nueva asignación")
             
     def start_loading(self, material_type, load_amount):
         """Inicia el proceso de carga"""
         self.task = "loading"
         self.material_type = material_type
         self.current_load = min(load_amount * self.efficiency, self.capacity)
-        print(f"Camión {self.id} cargando {self.current_load:.1f}t de {material_type}")
+
         
     def finish_loading(self):
         """Finaliza el proceso de carga"""
         self.loading = True
         self.task = "waiting_assignment"
-        print(f"Camión {self.id} carga completada")
+
         
     def start_dumping(self):
         """Inicia el proceso de descarga"""
         self.task = "dumping"
-        print(f"Camión {self.id} iniciando descarga")
+
         
     def finish_dumping(self):
         """Finaliza el proceso de descarga"""
@@ -125,7 +120,7 @@ class Truck:
         self.current_load = 0
         self.material_type = None
         self.task = "waiting_assignment"
-        print(f"Camión {self.id} descarga completada")
+
         
     def is_moving(self):
         """Verifica si el camión está en movimiento"""
