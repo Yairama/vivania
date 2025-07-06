@@ -1,4 +1,4 @@
-# core/simulation.py (Completamente rediseñado)
+# core/simulation.py (Corregido)
 from core.mine_map import MineMap
 from core.truck import Truck
 from core.shovel import Shovel
@@ -33,11 +33,16 @@ class Simulation:
         self.dump = Dump(self.map.nodes["dump_zone"])
         
         # Estadísticas
+        self.tick_count = 0
         self.total_cycles = 0
         self.total_mineral_processed = 0
         self.total_waste_dumped = 0
         
+        print(f"Simulación inicializada con {len(self.trucks)} camiones y {len(self.shovels)} palas")
+        
     def update(self):
+        self.tick_count += 1
+        
         # Actualizar equipos
         for shovel in self.shovels:
             shovel.update()
@@ -56,6 +61,10 @@ class Simulation:
             elif truck.task == "waiting_dump":
                 self._handle_truck_at_dump(truck)
                 
+        # Debug cada 60 ticks
+        if self.tick_count % 60 == 0:
+            self._print_debug_info()
+                
     def _assign_truck_task(self, truck):
         """Asigna una tarea al camión disponible"""
         if not truck.loading:
@@ -69,36 +78,30 @@ class Simulation:
                 if route:
                     truck.assign_route(route)
                     truck.task = "moving_to_shovel"
+                    print(f"Camión {truck.id} asignado a pala {best_shovel.id}")
         else:
             # Camión cargado - asignar destino de descarga
+            destination = None
+            
             if truck.material_type == 'mineral':
                 if self.crusher.can_accept_truck():
-                    route = self.dijkstra.get_shortest_path(
-                        truck.position.name, 
-                        self.crusher.node.name
-                    )
-                    if route:
-                        truck.assign_route(route)
-                        truck.task = "moving_to_dump"
+                    destination = self.crusher.node.name
                 elif self.dump.can_accept_truck():
-                    # Si crusher está lleno, enviar a dump
-                    route = self.dijkstra.get_shortest_path(
-                        truck.position.name, 
-                        self.dump.node.name
-                    )
-                    if route:
-                        truck.assign_route(route)
-                        truck.task = "moving_to_dump"
+                    destination = self.dump.node.name
             else:
                 # Material waste va al dump
                 if self.dump.can_accept_truck():
-                    route = self.dijkstra.get_shortest_path(
-                        truck.position.name, 
-                        self.dump.node.name
-                    )
-                    if route:
-                        truck.assign_route(route)
-                        truck.task = "moving_to_dump"
+                    destination = self.dump.node.name
+                    
+            if destination:
+                route = self.dijkstra.get_shortest_path(
+                    truck.position.name, 
+                    destination
+                )
+                if route:
+                    truck.assign_route(route)
+                    truck.task = "moving_to_dump"
+                    print(f"Camión {truck.id} va a descargar {truck.material_type} en {destination}")
                         
     def _find_best_shovel(self):
         """Encuentra la mejor pala disponible"""
@@ -116,20 +119,57 @@ class Simulation:
                 truck not in shovel.queue and 
                 shovel.current_truck != truck):
                 shovel.request_load(truck)
+                print(f"Camión {truck.id} se une a cola de pala {shovel.id}")
                 break
                 
     def _handle_truck_at_dump(self, truck):
         """Maneja camión esperando en punto de descarga"""
+        handled = False
+        
         if truck.position.name == "crusher":
             if truck not in self.crusher.queue and self.crusher.current_truck != truck:
                 self.crusher.request_dump(truck)
+                print(f"Camión {truck.id} se une a cola del crusher")
+                handled = True
         elif truck.position.name == "dump_zone":
             if truck not in self.dump.queue and self.dump.current_truck != truck:
                 self.dump.request_dump(truck)
+                print(f"Camión {truck.id} se une a cola del dump")
+                handled = True
+                
+        # Si no pudo unirse a ninguna cola, regresar al parking
+        if not handled and truck.task == "waiting_dump":
+            route = self.dijkstra.get_shortest_path(
+                truck.position.name,
+                "parking"
+            )
+            if route:
+                truck.assign_route(route)
+                truck.task = "returning"
+                print(f"Camión {truck.id} regresa al parking")
+                
+    def _print_debug_info(self):
+        """Imprime información de debug"""
+        print(f"\n=== TICK {self.tick_count} ===")
+        
+        # Estado de camiones
+        task_counts = {}
+        for truck in self.trucks:
+            task_counts[truck.task] = task_counts.get(truck.task, 0) + 1
+        print(f"Estados de camiones: {task_counts}")
+        
+        # Estado de colas
+        print(f"Colas - Shovels: {[len(s.queue) for s in self.shovels]}")
+        print(f"Colas - Crusher: {len(self.crusher.queue)}, Dump: {len(self.dump.queue)}")
+        
+        # Producción
+        print(f"Mineral procesado: {self.crusher.total_processed:.1f} tons")
+        print(f"Waste descargado: {self.dump.total_dumped:.1f} tons")
                 
     def get_statistics(self):
         """Obtiene estadísticas de la simulación"""
         return {
+            'tick_count': self.tick_count,
             'total_cycles': self.total_cycles,
             'mineral_processed': self.crusher.total_processed,
             'waste_dumped': self.dump.total_dumped,

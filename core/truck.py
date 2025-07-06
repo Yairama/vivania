@@ -1,4 +1,4 @@
-# core/truck.py (Completamente rediseñado)
+# core/truck.py (Corregido)
 import math
 
 class Truck:
@@ -50,16 +50,23 @@ class Truck:
         if not self.target_node or self.task in ["waiting_shovel", "loading", "waiting_dump", "dumping"]:
             return
             
-        current_node = self.route[self.current_route_index - 1] if self.current_route_index > 0 else self.position
+        # Obtener nodo actual correctamente
+        if self.current_route_index > 0:
+            current_node_name = self.route[self.current_route_index - 1]
+        else:
+            current_node_name = self.position.name
         
         # Encontrar el segmento actual
         current_segment = None
-        for segment in mine_map.nodes[current_node.name if hasattr(current_node, 'name') else current_node].segments:
+        current_node = mine_map.nodes[current_node_name]
+        
+        for segment in current_node.segments:
             if segment.destination.name == self.target_node:
                 current_segment = segment
                 break
                 
         if not current_segment:
+            print(f"Error: No se encontró segmento de {current_node_name} a {self.target_node}")
             return
             
         # Calcular velocidad y movimiento
@@ -130,4 +137,3 @@ class Truck:
     def is_available(self):
         """Verifica si el camión está disponible para asignación"""
         return self.task == "waiting_assignment"
-
