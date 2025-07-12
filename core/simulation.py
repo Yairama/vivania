@@ -1,7 +1,7 @@
 from core.fms_manager import FMSManager
 
 class Simulation:
-    """Simulador que avanza el tiempo delegando la logica al FMSManager."""
+    """Simulador que decide acciones y las ejecuta a traves del FMSManager."""
 
     def __init__(self):
         self.manager = FMSManager()
@@ -15,8 +15,48 @@ class Simulation:
         self.tick_count = 0
 
     def update(self):
+        """Aplica la logica de asignacion y actualiza el sistema."""
+        for truck in self.trucks:
+            if truck.is_available():
+                if truck.loading:
+                    dest = self._select_dump_destination(truck)
+                    if dest:
+                        dest_id = 0 if dest == 'crusher' else 1
+                        self.manager.execute_action(('dispatch_dump', truck.id, dest_id))
+                else:
+                    shovel = self._find_best_shovel()
+                    if shovel:
+                        self.manager.execute_action(('dispatch_shovel', truck.id, shovel.id))
+
         self.manager.update()
         self.tick_count = self.manager.tick_count
+
+    # ------------------------------------------------------------------
+    # Decision logic (heuristics)
+    # ------------------------------------------------------------------
+    def _select_dump_destination(self, truck):
+        destination = None
+        if truck.material_type == 'mineral':
+            if self.crusher.can_accept_truck():
+                destination = 'crusher'
+            elif self.dump.can_accept_truck():
+                destination = 'dump_zone'
+        else:
+            if self.dump.can_accept_truck():
+                destination = 'dump_zone'
+        return destination
+
+    def _find_best_shovel(self):
+        available = [s for s in self.shovels if s.can_accept_truck()]
+        if not available:
+            return None
+
+        mineral = [s for s in available if s.material_type == 'mineral']
+        waste = [s for s in available if s.material_type == 'waste']
+
+        if mineral and (not waste or self.crusher.total_processed < self.dump.total_dumped):
+            return min(mineral, key=lambda s: len(s.queue))
+        return min(available, key=lambda s: len(s.queue))
 
     def get_statistics(self):
         return self.manager.get_statistics()

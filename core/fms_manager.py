@@ -40,7 +40,7 @@ class FMSManager:
         self._verify_connectivity()
 
     # ------------------------------------------------------------------
-    # Actualizacion y logica principal
+    # Actualizacion del estado (sin logica de asignacion)
     # ------------------------------------------------------------------
     def update(self):
         self.tick_count += 1
@@ -55,9 +55,7 @@ class FMSManager:
         for truck in self.trucks:
             truck.update_movement(self.map, self.trucks)
 
-            if truck.is_available():
-                self._assign_truck_task(truck)
-            elif truck.task == "waiting_shovel":
+            if truck.task == "waiting_shovel":
                 self._handle_truck_at_shovel(truck)
             elif truck.task == "waiting_dump":
                 self._handle_truck_at_dump(truck)
@@ -65,48 +63,6 @@ class FMSManager:
         if self.tick_count % 100 == 0:
             self._print_debug_info()
 
-    # ------------------------------------------------------------------
-    # Logica de asignacion de tareas
-    # ------------------------------------------------------------------
-    def _assign_truck_task(self, truck: Truck):
-        if not truck.loading:
-            shovel = self._find_best_shovel()
-            if shovel:
-                route = self.dijkstra.get_shortest_path(truck.position.name, shovel.node.name)
-                if route and len(route) > 1:
-                    truck.assign_route(route)
-                    truck.task = "moving_to_shovel"
-        else:
-            self._assign_dump_destination(truck)
-
-    def _assign_dump_destination(self, truck: Truck):
-        destination = None
-        if truck.material_type == 'mineral':
-            if self.crusher.can_accept_truck():
-                destination = "crusher"
-            elif self.dump.can_accept_truck():
-                destination = "dump_zone"
-        else:
-            if self.dump.can_accept_truck():
-                destination = "dump_zone"
-
-        if destination:
-            route = self.dijkstra.get_shortest_path(truck.position.name, destination)
-            if route and len(route) > 1:
-                truck.assign_route(route)
-                truck.task = "moving_to_dump"
-
-    def _find_best_shovel(self) -> Shovel:
-        available_shovels = [s for s in self.shovels if s.can_accept_truck()]
-        if not available_shovels:
-            return None
-
-        mineral_shovels = [s for s in available_shovels if s.material_type == 'mineral']
-        waste_shovels = [s for s in available_shovels if s.material_type == 'waste']
-
-        if mineral_shovels and (not waste_shovels or self.crusher.total_processed < self.dump.total_dumped):
-            return min(mineral_shovels, key=lambda s: len(s.queue))
-        return min(available_shovels, key=lambda s: len(s.queue))
 
     def _handle_truck_at_shovel(self, truck: Truck):
         for shovel in self.shovels:
@@ -179,8 +135,12 @@ class FMSManager:
         actions = []
         for truck in self.trucks:
             if truck.is_available():
-                for shovel in self.shovels:
-                    actions.append(('dispatch_shovel', truck.id, shovel.id))
+                if truck.loading:
+                    actions.append(('dispatch_dump', truck.id, 0))  # crusher
+                    actions.append(('dispatch_dump', truck.id, 1))  # dump zone
+                else:
+                    for shovel in self.shovels:
+                        actions.append(('dispatch_shovel', truck.id, shovel.id))
         return actions
 
     def execute_action(self, action: Tuple[str, int, int]):
@@ -197,6 +157,12 @@ class FMSManager:
                 if route and len(route) > 1:
                     truck.assign_route(route)
                     truck.task = 'moving_to_shovel'
+        elif act == 'dispatch_dump':
+            destination = 'crusher' if target_id == 0 else 'dump_zone'
+            route = self.dijkstra.get_shortest_path(truck.position.name, destination)
+            if route and len(route) > 1:
+                truck.assign_route(route)
+                truck.task = 'moving_to_dump'
 
     def calculate_reward(self) -> float:
         return self.crusher.total_processed + self.dump.total_dumped
