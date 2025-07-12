@@ -1,6 +1,9 @@
 # core/visualizer.py (Mejorado con auto-escalado y ventana redimensionable)
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 class Visualizer:
     def __init__(self, simulation):
@@ -413,9 +416,13 @@ class Visualizer:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s:
                 self.show_speed_info = not self.show_speed_info
-                print(f"Información de velocidades: {'ON' if self.show_speed_info else 'OFF'}")
+                logger.info(
+                    f"Información de velocidades: {'ON' if self.show_speed_info else 'OFF'}"
+                )
             elif event.key == pygame.K_r:
                 self.show_truck_paths = not self.show_truck_paths
-                print(f"Rutas de camiones: {'ON' if self.show_truck_paths else 'OFF'}")
+                logger.info(
+                    f"Rutas de camiones: {'ON' if self.show_truck_paths else 'OFF'}"
+                )
         elif event.type == pygame.VIDEORESIZE:
             self.handle_resize(event.size)
