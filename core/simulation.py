@@ -14,8 +14,12 @@ class Simulation:
         
         # Crear flota de camiones (reducida para debug)
         self.trucks = [
-            Truck(i, 200, self.map.nodes["parking"], efficiency=0.85) 
-            for i in range(6)  # Reducido de 8 a 6
+            Truck(1, 200, self.map.nodes["parking"], efficiency=0.85),
+            Truck(2, 200, self.map.nodes["parking"], efficiency=0.75),
+            Truck(3, 200, self.map.nodes["parking"], efficiency=0.90),
+            Truck(4, 200, self.map.nodes["parking"], efficiency=0.88),
+            Truck(5, 200, self.map.nodes["parking"], efficiency=0.82),
+            Truck(6, 200, self.map.nodes["parking"], efficiency=0.78),
         ]
         
         # Crear shovels con diferentes características
