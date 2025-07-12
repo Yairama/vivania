@@ -2,6 +2,9 @@
 import random
 from core.node import Node
 from core.segment import Segment
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 class MineMap:
     def __init__(self):
@@ -126,7 +129,7 @@ class MineMap:
 
     def _print_speed_info(self):
         """Imprime información de velocidades para debug"""
-        print("\n=== INFORMACIÓN DE VELOCIDADES ===")
+        logger.info("\n=== INFORMACIÓN DE VELOCIDADES ===")
         
         # Categorizar segmentos por velocidad
         fast_segments = []
@@ -149,17 +152,27 @@ class MineMap:
                 else:
                     slow_segments.append(speed_info)
         
-        print(f"Rutas rápidas ({len(fast_segments)}): velocidad vacío ≥ 30 km/h")
+        logger.info(
+            f"Rutas rápidas ({len(fast_segments)}): velocidad vacío ≥ 30 km/h"
+        )
         for seg in fast_segments[:5]:  # Mostrar solo primeras 5
-            print(f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h")
+            logger.info(
+                f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h"
+            )
         
-        print(f"Rutas medias ({len(medium_segments)}): 25-30 km/h")
+        logger.info(f"Rutas medias ({len(medium_segments)}): 25-30 km/h")
         for seg in medium_segments[:3]:
-            print(f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h")
+            logger.info(
+                f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h"
+            )
             
-        print(f"Rutas lentas ({len(slow_segments)}): velocidad vacío < 25 km/h")
+        logger.info(
+            f"Rutas lentas ({len(slow_segments)}): velocidad vacío < 25 km/h"
+        )
         for seg in slow_segments[:3]:
-            print(f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h")
+            logger.info(
+                f"  {seg['route']}: {seg['empty_speed']:.1f}/{seg['loaded_speed']:.1f} km/h"
+            )
             
     def get_segment_between(self, node1_name, node2_name):
         """Obtiene el segmento entre dos nodos"""

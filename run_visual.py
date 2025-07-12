@@ -2,6 +2,9 @@
 from core.simulation import Simulation
 from core.visualizer import Visualizer
 import pygame
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 def run():
     pygame.init()
@@ -11,9 +14,9 @@ def run():
     clock = pygame.time.Clock()
     running = True
 
-    print("\n=== CONTROLES ===")
-    print("S - Mostrar/ocultar velocidades en segmentos")
-    print("ESC - Salir")
+    logger.info("\n=== CONTROLES ===")
+    logger.info("S - Mostrar/ocultar velocidades en segmentos")
+    logger.info("ESC - Salir")
 
     while running:
         clock.tick(60)

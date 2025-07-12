@@ -1,6 +1,9 @@
 # core/truck.py (Mejorado con velocidades por segmento)
 import math
 from config import FOLLOW_DISTANCE
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 class Truck:
     def __init__(self, id, capacity, position, efficiency=0.85):
@@ -57,7 +60,9 @@ class Truck:
                 # Convertir a ticks (asumiendo 1 tick = 0.1 horas)
                 self.movement_timer = int(actual_travel_time * 10)
                 self._original_timer = self.movement_timer  # Guardar para cálculo de progreso
-                print(f"Camión {self.id}: Viajando por segmento, tiempo: {self.movement_timer} ticks")
+                logger.debug(
+                    f"Camión {self.id}: Viajando por segmento, tiempo: {self.movement_timer} ticks"
+                )
         
         # Decrementar timer de movimiento considerando tráfico
         if self.movement_timer > 0:
@@ -148,31 +153,41 @@ class Truck:
         self.current_speed = 0.0
         if self.task == "moving_to_shovel":
             self.task = "waiting_shovel"
-            print(f"Camión {self.id} llegó a pala en {self.position.name}")
+            logger.debug(
+                f"Camión {self.id} llegó a pala en {self.position.name}"
+            )
         elif self.task == "moving_to_dump":
             self.task = "waiting_dump"
-            print(f"Camión {self.id} llegó a punto de descarga en {self.position.name}")
+            logger.debug(
+                f"Camión {self.id} llegó a punto de descarga en {self.position.name}"
+            )
         elif self.task == "returning":
             self.task = "waiting_assignment"
-            print(f"Camión {self.id} regresó a {self.position.name}")
+            logger.debug(f"Camión {self.id} regresó a {self.position.name}")
             
     def start_loading(self, material_type, load_amount):
         """Inicia el proceso de carga"""
         self.task = "loading"
         self.material_type = material_type
         self.current_load = min(load_amount * self.efficiency, self.capacity)
-        print(f"Camión {self.id} cargando {self.current_load:.1f}t de {material_type}")
+        logger.info(
+            f"Camión {self.id} cargando {self.current_load:.1f}t de {material_type}"
+        )
         
     def finish_loading(self):
         """Finaliza el proceso de carga"""
         self.loading = True
         self.task = "waiting_assignment"
-        print(f"Camión {self.id} terminó de cargar, peso: {self.current_load:.1f}t")
+        logger.info(
+            f"Camión {self.id} terminó de cargar, peso: {self.current_load:.1f}t"
+        )
         
     def start_dumping(self):
         """Inicia el proceso de descarga"""
         self.task = "dumping"
-        print(f"Camión {self.id} descargando {self.current_load:.1f}t de {self.material_type}")
+        logger.info(
+            f"Camión {self.id} descargando {self.current_load:.1f}t de {self.material_type}"
+        )
         
     def finish_dumping(self):
         """Finaliza el proceso de descarga"""
@@ -180,7 +195,7 @@ class Truck:
         self.current_load = 0
         self.material_type = None
         self.task = "waiting_assignment"
-        print(f"Camión {self.id} terminó de descargar")
+        logger.info(f"Camión {self.id} terminó de descargar")
         
     def is_moving(self):
         """Verifica si el camión está en movimiento"""

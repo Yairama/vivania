@@ -5,6 +5,9 @@ from core.crusher import Crusher
 from core.dump import Dump
 from core.dijkstra import Dijkstra
 from typing import List, Tuple, Dict, Any
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 class FMSManager:
     """Gestiona la flota y provee utilidades para entrenamiento RL."""
@@ -99,16 +102,18 @@ class FMSManager:
         for start, end in critical_routes:
             route = self.dijkstra.get_shortest_path(start, end)
             if not route:
-                print(f"⚠️  Sin ruta de {start} a {end}")
+                logger.warning(f"⚠️  Sin ruta de {start} a {end}")
 
     def _print_debug_info(self):
         task_counts: Dict[str, int] = {}
         for truck in self.trucks:
             task_counts[truck.task] = task_counts.get(truck.task, 0) + 1
-        print(f"\n=== TICK {self.tick_count} ===")
-        print(f"Estados de camiones: {task_counts}")
-        print(f"Mineral procesado: {self.crusher.total_processed:.1f}t")
-        print(f"Waste descargado: {self.dump.total_dumped:.1f}t")
+        logger.info(f"\n=== TICK {self.tick_count} ===")
+        logger.info(f"Estados de camiones: {task_counts}")
+        logger.info(
+            f"Mineral procesado: {self.crusher.total_processed:.1f}t"
+        )
+        logger.info(f"Waste descargado: {self.dump.total_dumped:.1f}t")
 
     # ------------------------------------------------------------------
     # Funciones para Reinforcement Learning

@@ -3,6 +3,9 @@ import numpy as np
 from typing import List, Tuple, Dict, Any
 
 from core.fms_manager import FMSManager
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 class MiningEnv(gym.Env):
     """Gym environment wrapper around the FMSManager for RL.
@@ -77,7 +80,7 @@ class MiningEnv(gym.Env):
 
     def render(self):
         stats = self.manager.get_statistics()
-        print(stats)
+        logger.info(stats)
 
     def close(self):
         if self.visualizer:
