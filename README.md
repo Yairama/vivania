@@ -55,6 +55,7 @@ El simulador permite analizar y optimizar operaciones mineras mediante la simula
 - **Asignación de Destinos**: El único elemento controlable del sistema
 - **Decision Making**: ¿A qué pala enviar camiones vacíos? ¿Crusher o dump para descarga?
 - **Optimización**: Balanceo de colas, minimización de hang time
+- **FMSManager**: Clase centralizadora que ejecuta estas decisiones y ofrece funciones para entrenamiento RL (`get_system_state`, `execute_action`, etc.)
 
 #### **Estados del Sistema Monitoreados**
 - Cola en cada pala (0-3 camiones máximo)
