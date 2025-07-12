@@ -55,12 +55,9 @@ class MiningEnv(gym.Env):
         self.render_mode = render_mode
         self.manager = FMSManager()
         self.visualizer = None
+        self.clock = None
         if self.render_mode == "visual":
-            import pygame
-            from core.visualizer import Visualizer
-            pygame.init()
-            self.clock = pygame.time.Clock()
-            self.visualizer = Visualizer(self.manager)
+            self._init_pygame()
 
         # Observation space: extended 54-dimensional vector
         self.obs_dim = 54
@@ -76,6 +73,31 @@ class MiningEnv(gym.Env):
         self.last_processed = 0.0
         self.last_dumped = 0.0
 
+    def _init_pygame(self):
+        """Initialize pygame and the visualizer."""
+        import pygame
+        from core.visualizer import Visualizer
+        pygame.init()
+        self.clock = pygame.time.Clock()
+        self.visualizer = Visualizer(self.manager)
+
+    def _handle_pygame_events(self):
+        """Process and respond to pygame events."""
+        import pygame
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (
+                event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
+            ):
+                # Switch to headless mode gracefully
+                pygame.quit()
+                self.visualizer = None
+                self.render_mode = "headless"
+                self.clock = None
+                break
+            else:
+                if self.visualizer:
+                    self.visualizer.handle_input(event)
+
     # ------------------------------------------------------------------
     # Environment core functions
     # ------------------------------------------------------------------
@@ -84,9 +106,8 @@ class MiningEnv(gym.Env):
         # Recreate manager to reset state
         self.manager = FMSManager()
         if self.visualizer:
-            # Recreate visualizer with the new manager
-            from core.visualizer import Visualizer
-            self.visualizer = Visualizer(self.manager)
+            # Reuse existing visualizer instance with new manager
+            self.visualizer.sim = self.manager
         self.running_stats = RunningStats(self.obs_dim)
         self.last_processed = 0.0
         self.last_dumped = 0.0
@@ -112,9 +133,15 @@ class MiningEnv(gym.Env):
         self.manager.update()
         if self.visualizer:
             import pygame
-            self.clock.tick(60)
-            pygame.event.pump()
-            self.visualizer.draw()
+            self.clock.tick(30)
+            self._handle_pygame_events()
+            try:
+                self.visualizer.draw()
+            except pygame.error:
+                pygame.quit()
+                self.visualizer = None
+                self.render_mode = "headless"
+                self.clock = None
         obs = self._get_observation()
         reward = self._calculate_reward()
         terminated = False
@@ -130,6 +157,8 @@ class MiningEnv(gym.Env):
         if self.visualizer:
             import pygame
             pygame.quit()
+            self.visualizer = None
+            self.clock = None
 
     # ------------------------------------------------------------------
     # Helper functions

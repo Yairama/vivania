@@ -61,8 +61,14 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
         device=device,
     )
 
-    model.learn(total_timesteps=timesteps, callback=callbacks)
-    model.save(os.path.join(logdir, f"{algo_name}_final"))
+    try:
+        model.learn(total_timesteps=timesteps, callback=callbacks)
+    except KeyboardInterrupt:
+        print("Training interrupted. Saving model...")
+    finally:
+        model.save(os.path.join(logdir, f"{algo_name}_final"))
+        env.close()
+        eval_env.close()
 
 
 def main():
