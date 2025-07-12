@@ -1,342 +1,350 @@
 # Open Pit Mining Fleet Management System (FMS) Simulator
 
-Un simulador avanzado de Fleet Management System (FMS) para operaciones mineras de rajo abierto desarrollado en Python con pygame. El sistema modela el comportamiento completo de carga y acarreo de material, enfocándose en la optimización de asignación de destinos de camiones mediante algoritmos de aprendizaje por refuerzo.
+Un simulador completo de Fleet Management System (FMS) para operaciones mineras de rajo abierto desarrollado en Python con pygame. El sistema modela el comportamiento completo de carga y acarreo de material, enfocándose en la optimización de asignación de destinos mediante algoritmos de aprendizaje por refuerzo.
 
 ## 🎯 Objetivo Principal
 
 El simulador permite analizar y optimizar operaciones mineras mediante la simulación realista de:
 - **Fleet Management System (FMS)**: Sistema de gestión de flota que controla asignación de destinos
 - **Ciclos de carga y acarreo**: Modelado completo del comportamiento de camiones mineros
-- **Gestión de colas y tráfico**: Simulación de hang time, queue time y bottlenecks
-  con control de velocidad según distancia entre camiones
+- **Gestión de colas y tráfico**: Simulación de hang time, queue time y bottlenecks con control de velocidad según distancia entre camiones
 - **Optimización por RL**: Entrenamiento de agentes de reinforcement learning para maximizar throughput
 
-### Objetivo Final: Sistema de Reinforcement Learning
-- **Algoritmos**: A2C (Advantage Actor-Critic) y Deep Q-Learning (DQN)
-- **Meta**: Aprender a operar el FMS para maximizar material movido y minimizar tiempos muertos
-- **Control**: Asignación inteligente de destinos de camiones en tiempo real
+### Control Único: Asignación de Destinos
+El único elemento controlable del simulador es **la asignación de destinos de camiones**:
+- ¿A qué pala enviar camiones vacíos?
+- ¿Crusher o dump para descarga de material?
+- Todo lo demás (movimiento, carga, descarga, colas) es simulado automáticamente
 
 ## 🏗️ Arquitectura del Sistema FMS
 
-### Componentes Principales del FMS
+### Componentes Principales
 
 #### **Equipos Móviles**
-- **Trucks (Camiones)**: Flota de camiones CAT 797 con capacidades de 200-400t
-  - Estados: waiting_assignment, moving_to_shovel, loading, moving_to_dump, dumping, returning
-  - Atributos: efficiency (0.7-0.95), capacidad, velocidad por segmento
-  - Métricas: cycle time, payload efficiency, utilization
+- **Trucks (Camiones)**: Flota de 6 camiones CAT 797 con capacidades de 200t
+  - Estados: `waiting_assignment`, `moving_to_shovel`, `loading`, `moving_to_dump`, `dumping`, `returning`
+  - Atributos: efficiency (0.75-0.90), velocidad variable por segmento
+  - Control de tráfico: distancia mínima entre camiones (30m)
+  - Pathfinding automático con algoritmo Dijkstra
 
 #### **Equipos Fijos**
 - **Shovels (Palas)**: 6 palas cargadoras con diferentes características
-  - Tipos: Mineral (c3, c4, c5) y Waste (c1, c2, c6)
-  - Capacidad: 35-47 toneladas por pase
-  - Eficiencia: 0.7-0.92
-  - Tiempo de carga: configurable (default 5 ticks)
+  - **Mineral**: c3 (40t, 85%), c4 (45t, 90%), c5 (47t, 92%)
+  - **Waste**: c1 (35t, 70%), c2 (37t, 80%), c6 (47t, 88%)
+  - Tiempo de carga: 5 ticks
+  - Capacidad de cola: máximo 3 camiones
 
-- **Crusher (Chancador)**: Procesamiento de mineral
+- **Crusher (Chancador)**: Procesamiento exclusivo de mineral
   - Throughput: 200 t/h
   - Tiempo de proceso: 4 ticks
   - Capacidad de cola: máximo 2 camiones
 
-- **Dump (Botadero)**: Descarga de material estéril
+- **Dump (Botadero)**: Descarga de material estéril y mineral excedente
   - Tiempo de descarga: 4 ticks
   - Capacidad de cola: máximo 2 camiones
 
-#### **Infraestructura Vial**
-- **Nodes (Nodos)**: 25 puntos de conexión en la red vial
-- **Segments (Segmentos)**: Conexiones bidireccionales con velocidades diferenciadas
-  - Velocidad vacío: 18-40 km/h según tipo de ruta
-  - Velocidad cargado: 60% de velocidad vacío
-  - Tipos: rutas principales, secundarias, acceso a palas
+#### **Red Vial Inteligente**
+- **25 Nodos** de conexión estratégicamente ubicados
+- **Segmentos bidireccionales** con velocidades diferenciadas:
+  - **Velocidad vacío**: 18-40 km/h según tipo de ruta
+  - **Velocidad cargado**: ~60% de velocidad vacío
+  - **Rutas principales**: 30-40 km/h (parking ↔ crusher/dump)
+  - **Rutas secundarias**: 25-35 km/h (conexiones internas)
+  - **Acceso a palas**: 18-25 km/h (maniobras lentas)
 
 ### Sistema de Control FMS
 
-#### **Único Punto de Control**
-- **Asignación de Destinos**: El único elemento controlable del sistema
-- **Decision Making**: ¿A qué pala enviar camiones vacíos? ¿Crusher o dump para descarga?
-- **Optimización**: Balanceo de colas, minimización de hang time
-- **FMSManager**: Clase centralizadora que ejecuta estas decisiones y ofrece funciones para entrenamiento RL (`get_system_state`, `execute_action`, etc.)
+#### **FMSManager: Núcleo del Sistema**
+La clase `FMSManager` centraliza toda la lógica de control y ofrece:
+- **Control de asignación**: Único punto de decisión del sistema
+- **Estados del sistema**: Monitoreo completo de equipos y colas
+- **Interfaz RL**: Funciones optimizadas para entrenamiento
+  - `get_system_state()`: Estado completo del sistema
+  - `get_available_actions()`: Acciones válidas disponibles
+  - `execute_action()`: Ejecutar decisión de asignación
+  - `calculate_reward()`: Función de recompensa para RL
 
-#### **Estados del Sistema Monitoreados**
-- Cola en cada pala (0-3 camiones máximo)
-- Estado de equipos fijos (busy/idle)
-- Posición y estado de todos los camiones
-- Throughput acumulado por tipo de material
-- Tiempos de ciclo y utilización
+#### **Lógica de Asignación Inteligente**
+El simulador incluye heurísticas avanzadas para asignación automática:
+- **Balanceo mineral/waste**: Prioriza mineral cuando crusher está disponible
+- **Gestión de colas**: Evita sobresaturar equipos
+- **Eficiencia de distancia**: Considera rutas óptimas
+- **Control de tráfico**: Previene congestión en segmentos
 
 ## 🚀 Instalación y Ejecución
 
 ### Prerrequisitos
 ```bash
-pip install pygame numpy
+pip install -r requirements.txt
 ```
+
+**Dependencias principales:**
+- `pygame>=2.1.0` - Visualización
+- `numpy>=1.21.0` - Cálculos numéricos
+
+**Dependencias RL (opcionales):**
+- `gymnasium>=0.21.0` - Environment wrapper
+- `stable-baselines3>=1.6.0` - Algoritmos RL
+- `torch>=1.12.0` - Deep learning
 
 ### Ejecución del Simulador
 
-**Modo Visual Completo (Recomendado):**
+**Modo Visual Completo (Recomendado para análisis):**
 ```bash
 python main.py --visual
 ```
 
-**Modo Headless (para entrenamiento RL):**
+**Modo Headless (Optimizado para entrenamiento RL):**
 ```bash
 python main.py
 ```
 
 ### Controles Interactivos
-- **S**: Toggle velocidades en segmentos
-- **R**: Toggle rutas de camiones
-- **ESC**: Salir
-- **Redimensionar**: Ventana adaptable con auto-escalado
+- **S**: Toggle información de velocidades en segmentos
+- **R**: Toggle rutas activas de camiones
+- **ESC**: Salir del simulador
+- **Redimensionar ventana**: Auto-escalado automático
 
-## 📁 Estructura del Proyecto Avanzado
+## 📁 Estructura del Proyecto
 
 ```
 mining_simulation/
-├── core/
-│   ├── simulation.py       # Motor principal FMS con lógica de asignación
-│   ├── truck.py           # Comportamiento avanzado de camiones con velocidades
-│   ├── shovel.py          # Palas con diferentes materiales y eficiencias
-│   ├── crusher.py         # Chancador con throughput y métricas
-│   ├── dump.py            # Botadero con capacidad y estadísticas
-│   ├── mine_map.py        # Red vial con velocidades diferenciadas
-│   ├── node.py            # Nodos de conexión
-│   ├── segment.py         # Segmentos con velocidades loaded/empty
-│   ├── dijkstra.py        # Pathfinding para navegación óptima
-│   └── visualizer.py      # Visualización avanzada y adaptable
-├── rl/                    # [PENDIENTE] Sistema de Reinforcement Learning
-│   ├── environment.py     # Gym environment wrapper
-│   ├── agents/
-│   │   ├── a2c_agent.py   # Advantage Actor-Critic
-│   │   └── dqn_agent.py   # Deep Q-Network
-│   ├── rewards.py         # Sistema de recompensas
-│   └── training.py        # Scripts de entrenamiento
-├── config.py              # Configuración del sistema
-├── main.py                # Punto de entrada
-├── run_headless.py        # Ejecución para entrenamiento
-├── run_visual.py          # Ejecución con visualización
-└── README.md              # Esta documentación
+├── core/                          # Motor principal del simulador
+│   ├── simulation.py             # Simulador con heurísticas de asignación
+│   ├── fms_manager.py            # Núcleo FMS con interfaz RL
+│   ├── truck.py                  # Comportamiento avanzado de camiones
+│   ├── shovel.py                 # Palas con materiales y eficiencias
+│   ├── crusher.py                # Chancador con throughput
+│   ├── dump.py                   # Botadero con estadísticas
+│   ├── mine_map.py               # Red vial con velocidades variables
+│   ├── dijkstra.py               # Pathfinding óptimo
+│   ├── node.py & segment.py      # Infraestructura de red
+│   └── visualizer.py             # Visualización avanzada adaptable
+├── rl/                           # Sistema de Reinforcement Learning
+│   ├── mining_env.py             # Gym environment wrapper ✅
+│   └── __init__.py
+├── docs/                         # Documentación técnica
+│   └── rl_env.md                 # Especificación del environment
+├── tests/                        # Tests del sistema
+│   └── test_env.py               # Validación del environment RL
+├── train_agents.py               # Script de entrenamiento RL ✅
+├── run_visual.py                 # Ejecución con visualización
+├── run_headless.py               # Ejecución sin interfaz
+├── config.py                     # Configuración del sistema
+├── logger.py                     # Sistema de logging
+├── requirements.txt              # Dependencias del proyecto
+└── main.py                       # Punto de entrada principal
 ```
 
-## 🔧 Configuración Avanzada
+## 🎮 Funcionalidades Implementadas
 
-### Parámetros del Simulador (config.py):
-- `SCREEN_WIDTH/HEIGHT`: Resolución (1920x1080 default)
-- `FPS`: 60 FPS para simulación fluida
-- `FOLLOW_DISTANCE`: distancia mínima entre camiones en un mismo segmento
-- Tiempos configurables por equipo
+### ✅ **Sistema de Simulación Completo**
+- [x] Modelado realista de equipos mineros
+- [x] Red vial con velocidades diferenciadas
+- [x] Control de tráfico y distancias mínimas
+- [x] Gestión de colas FIFO con capacidades limitadas
+- [x] Pathfinding automático con Dijkstra
+- [x] Sistema de estados avanzado para camiones
 
-### Flota y Equipos:
-- **6 Camiones CAT 797**: Eficiencia variable (0.85 base)
-- **6 Palas**: 3 mineral + 3 waste con características únicas
+### ✅ **Visualización Profesional**
+- [x] Interfaz pygame redimensionable
+- [x] Auto-escalado para cualquier resolución
+- [x] Información en tiempo real (colas, velocidades, producción)
+- [x] Códigos de color intuitivos por estado
+- [x] Visualización de rutas activas
+- [x] Panel de estadísticas detallado
+
+### ✅ **Sistema de Reinforcement Learning**
+- [x] Environment Gymnasium compatible (`MiningEnv`)
+- [x] Observation space de 11 dimensiones
+- [x] Action space discreto con action masking
+- [x] Función de recompensa balanceada
+- [x] Script de entrenamiento con A2C, PPO, DQN
+- [x] Callbacks de evaluación y checkpoints
+
+### ✅ **Métricas y Análisis**
+- [x] Throughput por tipo de material (mineral/waste)
+- [x] Tiempo en colas por equipo
+- [x] Utilización de equipos fijos
+- [x] Estados de camiones en tiempo real
+- [x] Detección automática de bottlenecks
+
+## 🤖 Sistema de Reinforcement Learning
+
+### Environment: `MiningEnv`
+
+**Observation Space** (11 dimensiones normalizadas):
+1. Tick de simulación
+2. Mineral procesado total
+3. Waste descargado total
+4. Cola del crusher
+5. Cola del dump
+6-11. Colas de las 6 palas
+
+**Action Space**:
+- Espacio discreto con action masking
+- Acciones válidas: asignación de destinos para camiones disponibles
+- Máximo 36 acciones posibles (6 camiones × 6 destinos)
+
+**Reward Function**:
+```python
+reward = throughput + truck_efficiency - queue_penalties
+```
+
+### Entrenamiento de Agentes
+
+**Entrenar con PPO (recomendado):**
+```bash
+python train_agents.py --algo ppo --timesteps 10000 --mode headless
+```
+
+**Entrenar con visualización (debug):**
+```bash
+python train_agents.py --algo ppo --timesteps 5000 --mode visual
+```
+
+**Algoritmos disponibles:**
+- **PPO**: Proximal Policy Optimization (recomendado)
+- **A2C**: Advantage Actor-Critic
+- **DQN**: Deep Q-Network
+
+## 📊 Configuración Avanzada
+
+### Parámetros del Simulador (`config.py`):
+```python
+SCREEN_WIDTH = 1920         # Resolución de pantalla
+SCREEN_HEIGHT = 1080
+FPS = 60                    # Frames por segundo
+FOLLOW_DISTANCE = 30        # Distancia mínima entre camiones (metros)
+```
+
+### Características de la Flota:
+- **6 Camiones**: Capacidad 200t, eficiencia variable (0.75-0.90)
+- **6 Palas**: 3 mineral + 3 waste, diferentes capacidades y eficiencias
 - **Red Vial**: 25 nodos, 40+ segmentos con velocidades realistas
 
 ### Velocidades por Tipo de Ruta:
-- **Rutas Principales**: 30-40 km/h (vacío), 18-25 km/h (cargado)
-- **Rutas Secundarias**: 25-35 km/h (vacío), 15-20 km/h (cargado)  
-- **Acceso a Palas**: 18-25 km/h (vacío), 10-15 km/h (cargado)
+| Tipo de Ruta | Velocidad Vacío | Velocidad Cargado |
+|--------------|----------------|-------------------|
+| Rutas Principales | 30-40 km/h | 18-25 km/h |
+| Rutas Secundarias | 25-35 km/h | 15-20 km/h |
+| Acceso a Palas | 18-25 km/h | 10-15 km/h |
 
-## 📊 Métricas y KPIs del FMS
+## 📈 Métricas de Rendimiento
 
-### Métricas de Rendimiento Implementadas:
-- **Throughput**: Toneladas procesadas por tipo (mineral/waste)
-- **Cycle Time**: Tiempo completo por ciclo de camión
-- **Queue Time**: Tiempo en colas por equipo
-- **Hang Time**: Tiempo de equipos inactivos
+### KPIs Implementados:
+- **Throughput**: Toneladas procesadas por tipo
+- **Queue Time**: Tiempo promedio en colas
 - **Utilization**: % de utilización por equipo
-- **Fleet Efficiency**: Eficiencia promedio de la flota
+- **Cycle Time**: Tiempo completo por ciclo
+- **Fleet Efficiency**: Eficiencia promedio de camiones
 
-### Dashboard Visual en Tiempo Real:
-- Estado de colas por equipo
+### Dashboard en Tiempo Real:
+- Estado de colas por equipo (visual)
 - Camiones en movimiento con velocidades
-- Producción acumulada
-- Rutas activas de camiones
-- Código de colores por estado/velocidad
+- Producción acumulada (mineral vs waste)
+- Rutas activas con códigos de color
+- Detección automática de congestión
 
-## 🤖 Sistema de Reinforcement Learning (En Desarrollo)
+## 🛠️ Casos de Uso
 
-### Estado Actual: Simulador Completo ✅
-- [x] Simulación completa del FMS
-- [x] Modelado realista de equipos y rutas
-- [x] Sistema de colas y tráfico
-- [x] Métricas de rendimiento
-- [x] Visualización avanzada
-- [x] Pathfinding con Dijkstra
+### **1. Análisis Operacional**
+- Identificación de bottlenecks en el sistema
+- Evaluación de configuraciones de flota
+- Análisis de impacto de rutas alternativas
+- Optimización de capacidades de equipos
 
-### Próximos Desarrollos: Sistema RL
-
-#### **1. Environment Wrapper (Prioritario)**
-```python
-# Pendiente: rl/environment.py
-class MiningFMSEnv(gym.Env):
-    - observation_space: Estado del sistema FMS
-    - action_space: Asignación de destinos
-    - reward_function: Maximizar throughput, minimizar hang
-    - step(): Ejecutar acción y obtener nuevo estado
-```
-
-#### **2. Agentes de RL**
-```python
-# Pendiente: rl/agents/
-- A2C Agent: Actor-Critic para acciones continuas
-- DQN Agent: Q-Learning para acciones discretas
-- Arquitecturas de red neuronal optimizadas
-```
-
-#### **3. Sistema de Recompensas**
-- **Positivas**: Throughput, eficiencia de carga, ciclos completos
-- **Negativas**: Hang time, queue excesivo, camiones idle
-- **Balanceadas**: Mineral vs waste según demanda
-
-#### **4. Entrenamiento y Evaluación**
-- Scripts de entrenamiento automático
-- Métricas de convergencia
-- Comparación con reglas heurísticas
-- Transferencia a escenarios complejos
-
-## 🎮 Funcionalidades Avanzadas Actuales
-
-### **Sistema de Asignación Inteligente**
-- Balanceo automático entre mineral/waste
-- Consideración de colas y capacidades
-- Pathfinding óptimo con Dijkstra
-- Asignación basada en distancia y eficiencia
-
-### **Simulación Realista**
-- Velocidades diferenciadas por carga y ruta
-- Eficiencia variable por camión
-- Tiempos de proceso realistas
-- Gestión de colas FIFO
-
-### **Visualización Profesional**
-- Auto-escalado para cualquier resolución
-- Ventana redimensionable
-- Información en tiempo real
-- Códigos de color intuitivos
-- Rutas y velocidades visuales
-
-### **Análisis de Rendimiento**
-- Detección de bottlenecks automática
-- Estadísticas de producción
-- Tracking de camiones atascados
-- Debug information detallado
-
-## 📈 Casos de Uso y Aplicaciones
-
-### **1. Optimización FMS Tradicional**
-- Evaluación de reglas de asignación heurísticas
-- Análisis de sensibilidad de parámetros
-- Identificación de bottlenecks operacionales
-
-### **2. Entrenamiento de RL (Objetivo Principal)**
+### **2. Entrenamiento de RL**
 - Desarrollo de políticas de asignación inteligentes
-- Comparación RL vs reglas tradicionales
+- Comparación RL vs heurísticas tradicionales
 - Adaptación a condiciones cambiantes
-- Entrenamiento acelerado con **CUDA** (si está disponible)
-- Checkpoints automáticos durante el aprendizaje
+- Benchmarking de algoritmos
 
-### **3. Análisis de Escenarios**
-- Pruebas de diferentes configuraciones de flota
-- Evaluación de impacto de rutas alternativas
-- Simulación de mantenimientos programados
-
-### **4. Investigación y Desarrollo**
-- Benchmarking de algoritmos de FMS
+### **3. Investigación y Desarrollo**
+- Plataforma para nuevos algoritmos FMS
 - Validación de estrategias operacionales
-- Plataforma para nuevos algoritmos
+- Testing de equipos virtuales
+- Análisis de sensibilidad de parámetros
 
-## 🔮 Roadmap de Desarrollo
+## 🔧 Personalización del Sistema
 
-### **Fase 1: Completar RL System (Próximo)**
-- [ ] Implementar environment wrapper
-- [ ] Desarrollar agentes A2C y DQN  
-- [ ] Sistema de recompensas balanceado
-- [ ] Scripts de entrenamiento básico
-
-### **Fase 2: Optimización y Métricas**
-- [ ] Métricas avanzadas de FMS
-- [ ] Hyperparameter tuning automático
-- [ ] Comparación con benchmarks industriales
-- [ ] Exportación de datos para análisis
-
-### **Fase 3: Funcionalidades Avanzadas**
-- [ ] Mantenimiento programado de equipos
-- [ ] Condiciones climáticas variables
-- [ ] Múltiples tipos de mineral
-- [ ] Prioridades dinámicas de producción
-
-### **Fase 4: Validación Industrial**
-- [ ] Calibración con datos reales
-- [ ] Integración con sistemas FMS existentes
-- [ ] Validación en minas piloto
-- [ ] Transferencia a producción
-
-## 🛠️ Personalización del Sistema
-
-### **Modificar Flota:**
+### **Modificar Configuración de Flota:**
 ```python
-# En simulation.py
+# En fms_manager.py
 self.trucks = [
-    Truck(i, capacity=200, position=start_node, efficiency=0.85) 
-    for i in range(8)  # Cambiar número de camiones
+    Truck(i, capacity=300, position=start_node, efficiency=0.90) 
+    for i in range(8)  # Cambiar número y características
 ]
 ```
 
 ### **Agregar Nuevas Palas:**
 ```python
-# En simulation.py  
 new_shovel = Shovel(
     id=7, 
     node=self.map.nodes["new_location"],
     material_type='mineral',
     ton_per_pass=50,
-    efficiency=0.9
+    efficiency=0.95
 )
+self.shovels.append(new_shovel)
 ```
 
-### **Configurar Red Vial:**
+### **Personalizar Red Vial:**
 ```python
-# En mine_map.py
-# Velocidades personalizadas por segmento
+# En mine_map.py - Velocidades por segmento
 connect(node1, node2, empty_speed=35, loaded_speed=20)
 ```
 
-## 📝 Notas Técnicas Importantes
+## 🔮 Roadmap de Desarrollo
+
+### **Próximas Mejoras Prioritarias:**
+- [ ] **Métricas avanzadas**: KPIs adicionales del FMS
+- [ ] **Algoritmos de optimización**: Nuevas estrategias de asignación
+- [ ] **Multi-objetivo**: Optimización de múltiples objetivos simultáneos
+- [ ] **Mantenimiento programado**: Simulación de paradas por mantención
+
+### **Extensiones a Largo Plazo:**
+- [ ] **Uncertainty modeling**: Fallas de equipos, clima, variabilidad
+- [ ] **Real-time adaptation**: Capacidades de adaptación en tiempo real
+- [ ] **Integration APIs**: Conectores para sistemas FMS reales
+- [ ] **Calibración con datos reales**: Validación con operaciones mineras
+
+## 📝 Notas Técnicas
 
 ### **Arquitectura del Simulador**
-- **Tick-based system**: Actualizaciones discretas cada tick
-- **Pathfinding**: Dijkstra para rutas óptimas entre nodos
-- **State Management**: Estados complejos para todos los equipos
-- **Scalable Design**: Fácil extensión para nuevos equipos/algoritmos
-
-### **Consideraciones de Performance**
-- Optimizado para entrenamiento RL (modo headless)
-- Visualización opcional sin impacto en lógica
-- Escalado automático para diferentes resoluciones
-- Debug information configurable
+- **Tick-based system**: Actualizaciones discretas (1 tick ≈ 0.1 horas)
+- **Event-driven**: Estados y transiciones bien definidos
+- **Modular design**: Fácil extensión y modificación
+- **Performance optimized**: Modo headless para entrenamiento intensivo
 
 ### **Validación del Modelo**
-- Verificación de conectividad automática
+- Verificación automática de conectividad de red
 - Detección de camiones atascados
-- Balanceo de tipos de material
-- Métricas de sanity check
+- Balanceo automático de tipos de material
+- Métricas de sanity check integradas
 
-## 🤝 Contribuciones y Extensiones
+### **Consideraciones de Performance**
+- Visualización opcional sin impacto en lógica de simulación
+- Escalado automático para diferentes resoluciones
+- Logging configurable por nivel
+- Optimizado para entrenamiento RL continuo
 
-### **Áreas Prioritarias para Contribuir:**
-1. **Sistema de RL**: Implementación de agentes y training loops
-2. **Métricas Avanzadas**: KPIs adicionales del FMS
-3. **Algoritmos de Optimización**: Nuevas estrategias de asignación
-4. **Validación**: Casos de prueba y benchmarks
+## 🤝 Contribuciones
 
-### **Extensiones Propuestas:**
-- Multi-objetivo optimization (throughput + consumo + desgaste)
-- Uncertainty modeling (fallas de equipos, clima)
-- Real-time adaptation capabilities
-- Integration APIs para sistemas reales
+### **Áreas de Contribución:**
+1. **Algoritmos RL**: Nuevos agentes y estrategias de entrenamiento
+2. **Métricas**: KPIs adicionales y análisis avanzados
+3. **Optimización**: Mejoras de performance y escalabilidad
+4. **Validación**: Casos de prueba y benchmarks industriales
+
+### **Guías de Desarrollo:**
+- Seguir la arquitectura modular existente
+- Mantener compatibilidad con el sistema RL
+- Documentar nuevas funcionalidades
+- Incluir tests para cambios críticos
 
 ---
 
-**Simulador FMS desarrollado como plataforma de investigación para Fleet Management Systems mineros con capacidades de Reinforcement Learning integradas.**
+**Simulador FMS desarrollado como plataforma de investigación para Fleet Management Systems mineros con capacidades completas de Reinforcement Learning.**
 
-*Objetivo: Revolucionar la operación de FMS mediante IA que aprende y optimiza automáticamente las decisiones de asignación de flota en tiempo real.*
+*Objetivo: Proporcionar una plataforma robusta para el desarrollo y evaluación de algoritmos de asignación inteligente en operaciones mineras, combinando simulación realista con técnicas de IA avanzadas.*
