@@ -232,6 +232,8 @@ class MiningFMSEnv(gym.Env):
 - Desarrollo de políticas de asignación inteligentes
 - Comparación RL vs reglas tradicionales
 - Adaptación a condiciones cambiantes
+- Entrenamiento acelerado con **CUDA** (si está disponible)
+- Checkpoints automáticos durante el aprendizaje
 
 ### **3. Análisis de Escenarios**
 - Pruebas de diferentes configuraciones de flota

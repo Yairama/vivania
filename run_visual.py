@@ -31,3 +31,4 @@ def run():
         visualizer.draw()
 
     pygame.quit()
+
