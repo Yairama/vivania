@@ -56,6 +56,7 @@ class MiningEnv(gym.Env):
         self.manager = FMSManager()
         self.visualizer = None
         self.clock = None
+        self._visual_paused = False
         if self.render_mode == "visual":
             self._init_pygame()
 
@@ -131,7 +132,7 @@ class MiningEnv(gym.Env):
             if truck:
                 self.manager.dispatch_dump(truck.id, False)
         self.manager.update()
-        if self.visualizer:
+        if self.visualizer and not self._visual_paused:
             import pygame
             self.clock.tick(30)
             self._handle_pygame_events()
@@ -152,6 +153,14 @@ class MiningEnv(gym.Env):
     def render(self):
         stats = self.manager.get_statistics()
         logger.info(stats)
+
+    def pause_visualizer(self):
+        """Temporarily disable visual updates."""
+        self._visual_paused = True
+
+    def resume_visualizer(self):
+        """Re-enable visual updates if available."""
+        self._visual_paused = False
 
     def close(self):
         if self.visualizer:

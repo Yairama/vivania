@@ -21,6 +21,23 @@ ALGOS = {
 }
 
 
+class VisualEvalCallback(EvalCallback):
+    """EvalCallback that pauses the training visualizer during evaluation."""
+
+    def __init__(self, train_env: MiningEnv, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.train_env = train_env
+
+    def _on_step(self) -> bool:
+        if hasattr(self.train_env, "pause_visualizer"):
+            self.train_env.pause_visualizer()
+        try:
+            return super()._on_step()
+        finally:
+            if hasattr(self.train_env, "resume_visualizer"):
+                self.train_env.resume_visualizer()
+
+
 def make_env(render_mode: str) -> gym.Env:
     env = MiningEnv(render_mode=render_mode)
     return Monitor(env)
@@ -34,8 +51,9 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
     eval_env = make_env("headless")
 
     stop_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5, min_evals=5, verbose=1)
-    eval_callback = EvalCallback(
-        eval_env,
+    eval_callback = VisualEvalCallback(
+        env,
+        eval_env=eval_env,
         callback_after_eval=stop_callback,
         best_model_save_path=os.path.join(logdir, "best"),
         log_path=logdir,
