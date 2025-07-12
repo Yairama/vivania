@@ -9,5 +9,5 @@ numpy>=1.21.0
 # Uncomment when implementing reinforcement learning features
 gym>=0.21.0
 stable-baselines3>=1.6.0
-# torch>=1.12.0
-# tensorboard>=2.9.0
+torch>=1.12.0
+tensorboard>=2.9.0
