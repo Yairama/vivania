@@ -72,7 +72,7 @@ class Simulation:
         
         # Actualizar camiones
         for truck in self.trucks:
-            truck.update_movement(self.map)
+            truck.update_movement(self.map, self.trucks)
             
             # Lógica de asignación de tareas
             if truck.is_available():

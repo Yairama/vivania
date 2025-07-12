@@ -8,6 +8,7 @@ El simulador permite analizar y optimizar operaciones mineras mediante la simula
 - **Fleet Management System (FMS)**: Sistema de gestión de flota que controla asignación de destinos
 - **Ciclos de carga y acarreo**: Modelado completo del comportamiento de camiones mineros
 - **Gestión de colas y tráfico**: Simulación de hang time, queue time y bottlenecks
+  con control de velocidad según distancia entre camiones
 - **Optimización por RL**: Entrenamiento de agentes de reinforcement learning para maximizar throughput
 
 ### Objetivo Final: Sistema de Reinforcement Learning
@@ -121,6 +122,7 @@ mining_simulation/
 ### Parámetros del Simulador (config.py):
 - `SCREEN_WIDTH/HEIGHT`: Resolución (1920x1080 default)
 - `FPS`: 60 FPS para simulación fluida
+- `FOLLOW_DISTANCE`: distancia mínima entre camiones en un mismo segmento
 - Tiempos configurables por equipo
 
 ### Flota y Equipos:
