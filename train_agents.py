@@ -74,7 +74,7 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--algo", choices=list(ALGOS.keys()), default="ppo")
-    parser.add_argument("--timesteps", type=int, default=50000)
+    parser.add_argument("--timesteps", type=int, default=100000)
     parser.add_argument("--logdir", type=str, default="training_logs")
     parser.add_argument(
         "--mode",
