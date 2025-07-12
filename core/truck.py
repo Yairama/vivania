@@ -1,5 +1,6 @@
 # core/truck.py (Mejorado con velocidades por segmento)
 import math
+from config import FOLLOW_DISTANCE
 
 class Truck:
     def __init__(self, id, capacity, position, efficiency=0.85):
@@ -27,6 +28,8 @@ class Truck:
         # Posición exacta para visualización
         self.x = position.x
         self.y = position.y
+        self._last_progress = 0.0
+        self.current_speed = 0.0
         
     def assign_route(self, route):
         """Asigna una nueva ruta al camión"""
@@ -37,8 +40,8 @@ class Truck:
             self.current_segment = None
             self.movement_timer = 0
     
-    def update_movement(self, mine_map, dt=1.0):
-        """Actualiza el movimiento del camión usando velocidades de segmento"""
+    def update_movement(self, mine_map, all_trucks=None, dt=1.0, follow_distance=FOLLOW_DISTANCE):
+        """Actualiza el movimiento del camión usando velocidades de segmento y control de tráfico"""
         if not self.target_node_name or self.task in ["waiting_shovel", "loading", "waiting_dump", "dumping"]:
             return
             
@@ -56,10 +59,32 @@ class Truck:
                 self._original_timer = self.movement_timer  # Guardar para cálculo de progreso
                 print(f"Camión {self.id}: Viajando por segmento, tiempo: {self.movement_timer} ticks")
         
-        # Decrementar timer de movimiento
+        # Decrementar timer de movimiento considerando tráfico
         if self.movement_timer > 0:
-            self.movement_timer -= 1
-            
+            progress_step = 1.0 / self._original_timer
+            old_progress = 1.0 - (self.movement_timer / self._original_timer)
+
+            if all_trucks and self.current_segment:
+                my_progress = 1.0 - (self.movement_timer / self._original_timer)
+                limit_progress = 1.0
+                for other in all_trucks:
+                    if other is self:
+                        continue
+                    if other.current_segment == self.current_segment:
+                        other_progress = 1.0 - (other.movement_timer / other._original_timer) if other._original_timer else 1.0
+                        if other_progress > my_progress:
+                            allowed = other_progress - (follow_distance / self.current_segment.distance)
+                            if allowed < limit_progress:
+                                limit_progress = allowed
+                if limit_progress < 1.0:
+                    progress_step = min(progress_step, max(0.0, limit_progress - my_progress))
+
+            self.movement_timer -= progress_step * self._original_timer
+            new_progress = 1.0 - (self.movement_timer / self._original_timer)
+            if self.current_segment:
+                self.current_speed = ((new_progress - old_progress) * self.current_segment.distance) / 0.1
+            self._last_progress = new_progress
+
             # Interpolar posición visual
             self._update_visual_position(mine_map)
         
@@ -104,6 +129,7 @@ class Truck:
             self.y = self.position.y
             self.route_index += 1
             self.current_segment = None  # Reset para el siguiente segmento
+            self.current_speed = 0.0
             
             # Verificar si hay más nodos en la ruta
             if self.route_index < len(self.route) - 1:
@@ -119,6 +145,7 @@ class Truck:
                 
     def _arrived_at_destination(self):
         """Maneja la llegada al destino"""
+        self.current_speed = 0.0
         if self.task == "moving_to_shovel":
             self.task = "waiting_shovel"
             print(f"Camión {self.id} llegó a pala en {self.position.name}")
@@ -165,10 +192,7 @@ class Truck:
         
     def get_current_speed(self):
         """Obtiene la velocidad actual del camión"""
-        if self.current_segment:
-            base_speed = self.current_segment.get_speed(self.loading)
-            return base_speed * (self.efficiency + 0.3)
-        return 0
+        return self.current_speed
         
     def get_status_info(self):
         """Obtiene información de estado para debug"""
