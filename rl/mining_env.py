@@ -5,13 +5,29 @@ from typing import List, Tuple, Dict, Any
 from core.fms_manager import FMSManager
 
 class MiningEnv(gym.Env):
-    """Gym environment wrapper around the FMSManager for RL."""
+    """Gym environment wrapper around the FMSManager for RL.
+
+    Parameters
+    ----------
+    render_mode : str, optional
+        If ``"visual"`` a pygame window will be opened and the environment
+        state will be rendered every step. ``"headless"`` (default) disables
+        any visual output.
+    """
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self):
+    def __init__(self, render_mode: str = "headless"):
         super().__init__()
+        self.render_mode = render_mode
         self.manager = FMSManager()
+        self.visualizer = None
+        if self.render_mode == "visual":
+            import pygame
+            from core.visualizer import Visualizer
+            pygame.init()
+            self.clock = pygame.time.Clock()
+            self.visualizer = Visualizer(self.manager)
 
         # Observation space: 11 floats
         obs_low = np.zeros(11, dtype=np.float32)
@@ -31,6 +47,10 @@ class MiningEnv(gym.Env):
         super().reset(seed=seed)
         # Recreate manager to reset state
         self.manager = FMSManager()
+        if self.visualizer:
+            # Recreate visualizer with the new manager
+            from core.visualizer import Visualizer
+            self.visualizer = Visualizer(self.manager)
         obs = self._get_observation()
         info = {"action_mask": self.valid_action_mask}
         return obs, info
@@ -43,6 +63,11 @@ class MiningEnv(gym.Env):
             chosen = None
         self.manager.execute_action(chosen)
         self.manager.update()
+        if self.visualizer:
+            import pygame
+            self.clock.tick(60)
+            pygame.event.pump()
+            self.visualizer.draw()
         obs = self._get_observation()
         reward = self._calculate_reward()
         terminated = False
@@ -55,7 +80,9 @@ class MiningEnv(gym.Env):
         print(stats)
 
     def close(self):
-        pass
+        if self.visualizer:
+            import pygame
+            pygame.quit()
 
     # ------------------------------------------------------------------
     # Helper functions
