@@ -1,9 +1,39 @@
 import gymnasium as gym
 import numpy as np
-from typing import List, Tuple, Dict, Any
+from typing import Dict, Any
 
 from core.fms_manager import FMSManager
 from logger import get_logger
+
+
+class RunningStats:
+    """Simple running mean/std calculator for normalisation."""
+
+    def __init__(self, shape):
+        self.mean = np.zeros(shape, dtype=np.float32)
+        self.var = np.ones(shape, dtype=np.float32)
+        self.count = 1e-4
+
+    def update(self, x: np.ndarray):
+        batch_mean = x.mean(axis=0)
+        batch_var = x.var(axis=0)
+        batch_count = x.shape[0]
+
+        delta = batch_mean - self.mean
+        tot_count = self.count + batch_count
+
+        new_mean = self.mean + delta * batch_count / tot_count
+        m_a = self.var * self.count
+        m_b = batch_var * batch_count
+        M2 = m_a + m_b + np.square(delta) * self.count * batch_count / tot_count
+        new_var = M2 / tot_count
+
+        self.mean = new_mean
+        self.var = new_var
+        self.count = tot_count
+
+    def normalize(self, x: np.ndarray) -> np.ndarray:
+        return np.clip((x - self.mean) / (np.sqrt(self.var) + 1e-8), 0.0, 1.0)
 
 logger = get_logger(__name__)
 
@@ -32,16 +62,19 @@ class MiningEnv(gym.Env):
             self.clock = pygame.time.Clock()
             self.visualizer = Visualizer(self.manager)
 
-        # Observation space: 11 floats
-        obs_low = np.zeros(11, dtype=np.float32)
-        obs_high = np.ones(11, dtype=np.float32) * np.inf
+        # Observation space: extended 54-dimensional vector
+        self.obs_dim = 54
+        obs_low = np.zeros(self.obs_dim, dtype=np.float32)
+        obs_high = np.ones(self.obs_dim, dtype=np.float32) * np.inf
         self.observation_space = gym.spaces.Box(low=obs_low, high=obs_high, dtype=np.float32)
 
-        # Action space: index into list of available actions
-        self.max_actions = len(self.manager.trucks) * 6  # worst case
-        self.action_space = gym.spaces.Discrete(self.max_actions)
+        # Simplified action space (0=nothing, 1-6=shovels, 7=crusher, 8=dump)
+        self.action_space = gym.spaces.Discrete(9)
 
-        self.valid_action_mask: np.ndarray = np.zeros(self.max_actions, dtype=np.float32)
+        self.valid_action_mask: np.ndarray = np.zeros(9, dtype=np.float32)
+        self.running_stats = RunningStats(self.obs_dim)
+        self.last_processed = 0.0
+        self.last_dumped = 0.0
 
     # ------------------------------------------------------------------
     # Environment core functions
@@ -54,17 +87,28 @@ class MiningEnv(gym.Env):
             # Recreate visualizer with the new manager
             from core.visualizer import Visualizer
             self.visualizer = Visualizer(self.manager)
+        self.running_stats = RunningStats(self.obs_dim)
+        self.last_processed = 0.0
+        self.last_dumped = 0.0
         obs = self._get_observation()
         info = {"action_mask": self.valid_action_mask}
         return obs, info
 
     def step(self, action: int):
-        actions = self.manager.get_available_actions()
-        if 0 <= action < len(actions):
-            chosen = actions[action]
-        else:
-            chosen = None
-        self.manager.execute_action(chosen)
+        if action == 0:
+            pass
+        elif 1 <= action <= 6:
+            truck = self.manager.get_available_truck(loaded=False)
+            if truck:
+                self.manager.dispatch_shovel(truck.id, action)
+        elif action == 7:
+            truck = self.manager.get_available_truck(loaded=True)
+            if truck:
+                self.manager.dispatch_dump(truck.id, True)
+        elif action == 8:
+            truck = self.manager.get_available_truck(loaded=True)
+            if truck:
+                self.manager.dispatch_dump(truck.id, False)
         self.manager.update()
         if self.visualizer:
             import pygame
@@ -91,24 +135,42 @@ class MiningEnv(gym.Env):
     # Helper functions
     # ------------------------------------------------------------------
     def _calculate_reward(self) -> float:
-        """Balanced reward: throughput + efficiency - queues."""
-        throughput = self.manager.crusher.total_processed + self.manager.dump.total_dumped
-        efficiency = np.mean([t.efficiency for t in self.manager.trucks])
-        queues = sum(len(s.queue) for s in self.manager.shovels)
-        queues += len(self.manager.crusher.queue) + len(self.manager.dump.queue)
-        return throughput + efficiency - queues
+        """Balanced reward with production deltas and penalties."""
+        delta_mineral = self.manager.crusher.total_processed - self.last_processed
+        delta_waste = self.manager.dump.total_dumped - self.last_dumped
+        self.last_processed = self.manager.crusher.total_processed
+        self.last_dumped = self.manager.dump.total_dumped
+
+        production = delta_waste + 2.0 * delta_mineral
+
+        working = np.mean([1.0 if not t.is_available() else 0.0 for t in self.manager.trucks])
+        queue_penalty = (
+            len(self.manager.crusher.queue)
+            + len(self.manager.dump.queue)
+            + sum(len(s.queue) for s in self.manager.shovels)
+        )
+        return production + working - 0.1 * queue_penalty
 
     def _get_observation(self) -> np.ndarray:
-        raw_obs = np.array(self.manager.get_observation_vector(), dtype=np.float32)
-        # Normalization: simplistic, divide by fixed values
-        norm_factors = np.array([
-            1000.0, 10000.0, 10000.0, 3.0, 3.0,
-            3.0, 3.0, 3.0, 3.0, 3.0, 3.0
-        ], dtype=np.float32)
-        obs = raw_obs / norm_factors
-        obs = np.clip(obs, 0, 1)
+        raw_obs = np.array(self.manager.get_extended_observation_vector(), dtype=np.float32)
+        self.running_stats.update(raw_obs[None, :])
+        obs = self.running_stats.normalize(raw_obs)
 
-        actions = self.manager.get_available_actions()
-        self.valid_action_mask = np.zeros(self.max_actions, dtype=np.float32)
-        self.valid_action_mask[:len(actions)] = 1.0
+        self._update_action_mask()
         return obs
+
+    def _update_action_mask(self):
+        mask = np.zeros(9, dtype=np.float32)
+        mask[0] = 1.0
+        any_empty = any(t.is_available() and not t.loading for t in self.manager.trucks)
+        any_loaded = any(t.is_available() and t.loading for t in self.manager.trucks)
+        if any_empty:
+            for i, shovel in enumerate(self.manager.shovels, start=1):
+                if shovel.can_accept_truck():
+                    mask[i] = 1.0
+        if any_loaded:
+            if self.manager.crusher.can_accept_truck():
+                mask[7] = 1.0
+            if self.manager.dump.can_accept_truck():
+                mask[8] = 1.0
+        self.valid_action_mask = mask
