@@ -6,6 +6,7 @@ from core.dump import Dump
 from core.dijkstra import Dijkstra
 from typing import List, Tuple, Dict, Any
 from logger import get_logger
+import numpy as np
 
 logger = get_logger(__name__)
 
@@ -180,3 +181,114 @@ class FMSManager:
             'trucks_moving': len([t for t in self.trucks if t.is_moving()]),
             'trucks_waiting': len([t for t in self.trucks if 'waiting' in t.task])
         }
+
+    # ------------------------------------------------------------------
+    # Additional helper functions for advanced RL
+    # ------------------------------------------------------------------
+    def get_available_truck(self, loaded: bool) -> Truck | None:
+        """Return first available truck matching loaded state."""
+        for t in self.trucks:
+            if t.is_available() and t.loading == loaded:
+                return t
+        return None
+
+    def dispatch_shovel(self, truck_id: int, shovel_id: int) -> bool:
+        truck = next((t for t in self.trucks if t.id == truck_id), None)
+        shovel = next((s for s in self.shovels if s.id == shovel_id), None)
+        if not truck or not shovel:
+            return False
+        route = self.dijkstra.get_shortest_path(truck.position.name, shovel.node.name)
+        if route and len(route) > 1:
+            truck.assign_route(route)
+            truck.task = 'moving_to_shovel'
+            return True
+        return False
+
+    def dispatch_dump(self, truck_id: int, to_crusher: bool) -> bool:
+        truck = next((t for t in self.trucks if t.id == truck_id), None)
+        if not truck:
+            return False
+        destination = 'crusher' if to_crusher else 'dump_zone'
+        route = self.dijkstra.get_shortest_path(truck.position.name, destination)
+        if route and len(route) > 1:
+            truck.assign_route(route)
+            truck.task = 'moving_to_dump'
+            return True
+        return False
+
+    def get_distance_between(self, start: str, end: str) -> float:
+        route = self.dijkstra.get_shortest_path(start, end)
+        if not route or len(route) < 2:
+            return 0.0
+        distance = 0.0
+        for i in range(len(route) - 1):
+            seg = self.map.get_segment_between(route[i], route[i + 1])
+            if seg:
+                distance += seg.distance
+        return distance
+
+    def _nearest_shovel_name(self, start: str) -> str:
+        distances = [self.get_distance_between(start, s.node.name) for s in self.shovels]
+        idx = int(np.argmin(distances)) if distances else 0
+        return self.shovels[idx].node.name
+
+    def _encode_task(self, task: str) -> int:
+        mapping = {
+            'waiting_assignment': 0,
+            'moving_to_shovel': 1,
+            'waiting_shovel': 2,
+            'loading': 3,
+            'moving_to_dump': 4,
+            'waiting_dump': 5,
+            'dumping': 6,
+            'returning': 7,
+        }
+        return mapping.get(task, 0)
+
+    def get_extended_observation_vector(self) -> List[float]:
+        obs: List[float] = []
+
+        # Global state
+        obs.append(self.tick_count)
+        obs.append(self.crusher.total_processed)
+        available = len([t for t in self.trucks if t.is_available()])
+        obs.append(available)
+
+        # Equipment status
+        obs.append(len(self.crusher.queue))
+        obs.append(1 if self.crusher.current_truck else 0)
+        obs.append(len(self.dump.queue))
+        obs.append(1 if self.dump.current_truck else 0)
+        for shovel in self.shovels:
+            obs.append(len(shovel.queue))
+            obs.append(1 if shovel.current_truck else 0)
+
+        # Truck states
+        for t in self.trucks:
+            obs.append(self._encode_task(t.task))
+            obs.append(t.current_load / t.capacity)
+            obs.append(t.efficiency)
+            obs.append(self.get_distance_between(t.position.name, 'crusher'))
+            obs.append(self.get_distance_between(t.position.name, 'dump_zone'))
+
+        # Spatial aggregates and fleet utilisation
+        avg_shovel_dist = np.mean([
+            self.get_distance_between(t.position.name, self._nearest_shovel_name(t.position.name))
+            for t in self.trucks
+        ])
+        avg_crusher_dist = np.mean([
+            self.get_distance_between(t.position.name, 'crusher') for t in self.trucks
+        ])
+        avg_dump_dist = np.mean([
+            self.get_distance_between(t.position.name, 'dump_zone') for t in self.trucks
+        ])
+        obs.extend([avg_shovel_dist, avg_crusher_dist, avg_dump_dist])
+
+        loading_trucks = len([
+            t for t in self.trucks if t.task in ['loading', 'waiting_dump', 'dumping', 'moving_to_dump']
+        ])
+        moving_trucks = len([t for t in self.trucks if t.is_moving()])
+        obs.append(loading_trucks)
+        obs.append(moving_trucks)
+
+        return obs

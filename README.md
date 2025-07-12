@@ -156,7 +156,7 @@ mining_simulation/
 
 ### ✅ **Sistema de Reinforcement Learning**
 - [x] Environment Gymnasium compatible (`MiningEnv`)
-- [x] Observation space de 11 dimensiones
+- [x] Observation space de 54 dimensiones
 - [x] Action space discreto con action masking
 - [x] Función de recompensa balanceada
 - [x] Script de entrenamiento con A2C, PPO, DQN
@@ -173,22 +173,22 @@ mining_simulation/
 
 ### Environment: `MiningEnv`
 
-**Observation Space** (11 dimensiones normalizadas):
-1. Tick de simulación
-2. Mineral procesado total
-3. Waste descargado total
-4. Cola del crusher
-5. Cola del dump
-6-11. Colas de las 6 palas
+**Observation Space** (54 dimensiones normalizadas):
+- Estado global (tick, producción total, camiones disponibles)
+- Colas y estado de crusher, dump y palas
+- Estado detallado de cada camión
+- Distancias promedio a destinos clave
 
 **Action Space**:
-- Espacio discreto con action masking
-- Acciones válidas: asignación de destinos para camiones disponibles
-- Máximo 36 acciones posibles (6 camiones × 6 destinos)
+- 9 acciones discretas con masking
+- 0: No-op
+- 1-6: Enviar camión vacío a cada pala
+- 7: Enviar camión cargado al crusher
+- 8: Enviar camión cargado al dump
 
 **Reward Function**:
 ```python
-reward = throughput + truck_efficiency - queue_penalties
+reward = (delta_waste + 2 * delta_mineral) + fleet_utilisation - 0.1 * queue_penalty
 ```
 
 ### Entrenamiento de Agentes
