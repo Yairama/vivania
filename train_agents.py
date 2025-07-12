@@ -39,7 +39,7 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
         callback_after_eval=stop_callback,
         best_model_save_path=os.path.join(logdir, "best"),
         log_path=logdir,
-        eval_freq=500,
+        eval_freq=10000,
         n_eval_episodes=3,
     )
 
@@ -74,7 +74,7 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--algo", choices=list(ALGOS.keys()), default="ppo")
-    parser.add_argument("--timesteps", type=int, default=10000)
+    parser.add_argument("--timesteps", type=int, default=50000)
     parser.add_argument("--logdir", type=str, default="training_logs")
     parser.add_argument(
         "--mode",
