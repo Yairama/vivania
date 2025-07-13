@@ -74,7 +74,7 @@ def train(
     algo_class = PPO
     env = make_env(render_mode=render_mode, max_steps=1000000)
     # Evaluation environment should be headless to speed up training
-    eval_env = make_env("headless")
+    eval_env = make_env("headless", max_steps=5000)
 
     eval_callback = VisualEvalCallback(
         env,
