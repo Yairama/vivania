@@ -61,7 +61,7 @@ Recent implementation frameworks support **fleet sizes up to 30,000 agents** wit
 - Clip range: 0.2 for conservative policy updates
 - GAE lambda: 0.95 for bias-variance balance
 
-**Action masking implementation** should provide binary masks for each action dimension, with dynamic mask generation based on current mine state including equipment availability, capacity constraints, and safety protocols. The `get_action_masks()` method should integrate with existing fleet management systems to reflect real-time operational conditions.
+Previously the environment relied on action masking to avoid invalid moves. The latest setup removes this mechanism in favour of simpler policies without masks.
 
 **Multi-agent coordination** should follow the CTDE paradigm with centralized training accessing global mine state while enabling decentralized execution for individual trucks. Implement hierarchical communication protocols with supervisor-level planning, coordinator-level task assignment, and executor-level equipment control.
 

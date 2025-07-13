@@ -6,34 +6,7 @@ from core.fms_manager import FMSManager
 from logger import get_logger
 
 
-class RunningStats:
-    """Simple running mean/std calculator for normalisation."""
 
-    def __init__(self, shape):
-        self.mean = np.zeros(shape, dtype=np.float32)
-        self.var = np.ones(shape, dtype=np.float32)
-        self.count = 1e-4
-
-    def update(self, x: np.ndarray):
-        batch_mean = x.mean(axis=0)
-        batch_var = x.var(axis=0)
-        batch_count = x.shape[0]
-
-        delta = batch_mean - self.mean
-        tot_count = self.count + batch_count
-
-        new_mean = self.mean + delta * batch_count / tot_count
-        m_a = self.var * self.count
-        m_b = batch_var * batch_count
-        M2 = m_a + m_b + np.square(delta) * self.count * batch_count / tot_count
-        new_var = M2 / tot_count
-
-        self.mean = new_mean
-        self.var = new_var
-        self.count = tot_count
-
-    def normalize(self, x: np.ndarray) -> np.ndarray:
-        return np.clip((x - self.mean) / (np.sqrt(self.var) + 1e-8), 0.0, 1.0)
 
 
 logger = get_logger(__name__)
@@ -52,9 +25,6 @@ class MiningEnv(gym.Env):
         Maximum number of steps per episode before truncation.
     target_production : float, optional
         Total tonnage after which the episode terminates.
-    freeze_stats : bool, optional
-        If ``True`` the running normalisation statistics are kept fixed and do
-        not update during ``reset`` or ``step``. Useful for evaluation.
     """
 
     metadata = {"render.modes": ["human"]}
@@ -64,7 +34,6 @@ class MiningEnv(gym.Env):
         render_mode: str = "headless",
         max_steps: int = 800,
         target_production: float = 400.0,
-        freeze_stats: bool = False,
     ):
         super().__init__()
         self.render_mode = render_mode
@@ -72,7 +41,6 @@ class MiningEnv(gym.Env):
         self.max_steps = max_steps
         self.target_production = target_production
         self.step_count = 0
-        self.freeze_stats = freeze_stats
         self.visualizer = None
         self.clock = None
         self._visual_paused = False
@@ -89,9 +57,6 @@ class MiningEnv(gym.Env):
 
         # Simplified action space (0=nothing, 1-6=shovels, 7=crusher, 8=dump)
         self.action_space = gym.spaces.Discrete(9)
-
-        self.valid_action_mask: np.ndarray = np.zeros(9, dtype=np.float32)
-        self.running_stats = RunningStats(self.obs_dim)
         self.last_processed = 0.0
         self.last_dumped = 0.0
         self.last_mineral_lost = 0.0
@@ -143,15 +108,13 @@ class MiningEnv(gym.Env):
         if self.visualizer:
             # Reuse existing visualizer instance with new manager
             self.visualizer.sim = self.manager
-        if not self.freeze_stats:
-            self.running_stats = RunningStats(self.obs_dim)
         self.last_processed = 0.0
         self.last_dumped = 0.0
         self.last_mineral_lost = 0.0
         self.last_waste_wrong = 0.0
         self.last_hang_time = 0.0
         obs = self._get_observation()
-        info = {"action_mask": self.valid_action_mask}
+        info = {}
         return obs, info
 
     def step(self, action: int):
@@ -191,7 +154,6 @@ class MiningEnv(gym.Env):
         terminated = production >= self.target_production
         truncated = self.step_count >= self.max_steps
         info = {
-            "action_mask": self.valid_action_mask,
             "throughput": production,
             "fleet_utilization": np.mean(
                 [1.0 if not t.is_available() else 0.0 for t in self.manager.trucks]
@@ -259,53 +221,5 @@ class MiningEnv(gym.Env):
         raw_obs = np.array(
             self.manager.get_extended_observation_vector(), dtype=np.float32
         )
-        if not self.freeze_stats:
-            self.running_stats.update(raw_obs[None, :])
-        obs = self.running_stats.normalize(raw_obs)
+        return raw_obs
 
-        self._update_action_mask()
-        return obs
-
-    # ------------------------------------------------------------------
-    # Running stats utilities
-    # ------------------------------------------------------------------
-    def save_running_stats(self, path: str):
-        """Save running normalisation statistics to a file."""
-        np.savez(
-            path,
-            mean=self.running_stats.mean,
-            var=self.running_stats.var,
-            count=self.running_stats.count,
-        )
-
-    def load_running_stats_from_file(self, path: str):
-        """Load running normalisation statistics from ``path``."""
-        data = np.load(path)
-        self.running_stats.mean = data["mean"]
-        self.running_stats.var = data["var"]
-        self.running_stats.count = data["count"].item() if hasattr(data["count"], "item") else data["count"]
-
-    def get_normalised_observation(self) -> np.ndarray:
-        """Return current observation using existing running stats without updating them."""
-        raw_obs = np.array(
-            self.manager.get_extended_observation_vector(), dtype=np.float32
-        )
-        obs = self.running_stats.normalize(raw_obs)
-        self._update_action_mask()
-        return obs
-
-    def _update_action_mask(self):
-        mask = np.zeros(9, dtype=np.float32)
-        mask[0] = 1.0
-        any_empty = any(t.is_available() and not t.loading for t in self.manager.trucks)
-        any_loaded = any(t.is_available() and t.loading for t in self.manager.trucks)
-        if any_empty:
-            for i, shovel in enumerate(self.manager.shovels, start=1):
-                if shovel.can_accept_truck():
-                    mask[i] = 1.0
-        if any_loaded:
-            if self.manager.crusher.can_accept_truck():
-                mask[7] = 1.0
-            if self.manager.dump.can_accept_truck():
-                mask[8] = 1.0
-        self.valid_action_mask = mask
