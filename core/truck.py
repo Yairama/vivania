@@ -165,13 +165,20 @@ class Truck:
             self.task = "waiting_assignment"
             logger.debug(f"Camión {self.id} regresó a {self.position.name}")
             
-    def start_loading(self, material_type, load_amount):
-        """Inicia el proceso de carga"""
+    def start_loading(self, material_type):
+        """Begin loading sequence for a truck."""
         self.task = "loading"
         self.material_type = material_type
-        self.current_load = min(load_amount * self.efficiency, self.capacity)
+        self.current_load = 0.0
         logger.info(
-            f"Camión {self.id} cargando {self.current_load:.1f}t de {material_type}"
+            f"Camión {self.id} iniciando carga de {material_type}"
+        )
+
+    def add_load(self, amount):
+        """Add material to the truck considering its efficiency."""
+        self.current_load = min(
+            self.current_load + amount * self.efficiency,
+            self.capacity,
         )
         
     def finish_loading(self):
