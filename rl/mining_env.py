@@ -35,7 +35,9 @@ class RunningStats:
     def normalize(self, x: np.ndarray) -> np.ndarray:
         return np.clip((x - self.mean) / (np.sqrt(self.var) + 1e-8), 0.0, 1.0)
 
+
 logger = get_logger(__name__)
+
 
 class MiningEnv(gym.Env):
     """Gym environment wrapper around the FMSManager for RL.
@@ -46,14 +48,26 @@ class MiningEnv(gym.Env):
         If ``"visual"`` a pygame window will be opened and the environment
         state will be rendered every step. ``"headless"`` (default) disables
         any visual output.
+    max_steps : int, optional
+        Maximum number of steps per episode before truncation.
+    target_production : float, optional
+        Total tonnage after which the episode terminates.
     """
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, render_mode: str = "headless"):
+    def __init__(
+        self,
+        render_mode: str = "headless",
+        max_steps: int = 800,
+        target_production: float = 400.0,
+    ):
         super().__init__()
         self.render_mode = render_mode
         self.manager = FMSManager()
+        self.max_steps = max_steps
+        self.target_production = target_production
+        self.step_count = 0
         self.visualizer = None
         self.clock = None
         self._visual_paused = False
@@ -64,7 +78,9 @@ class MiningEnv(gym.Env):
         self.obs_dim = 54
         obs_low = np.zeros(self.obs_dim, dtype=np.float32)
         obs_high = np.ones(self.obs_dim, dtype=np.float32) * np.inf
-        self.observation_space = gym.spaces.Box(low=obs_low, high=obs_high, dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            low=obs_low, high=obs_high, dtype=np.float32
+        )
 
         # Simplified action space (0=nothing, 1-6=shovels, 7=crusher, 8=dump)
         self.action_space = gym.spaces.Discrete(9)
@@ -78,6 +94,7 @@ class MiningEnv(gym.Env):
         """Initialize pygame and the visualizer."""
         import pygame
         from core.visualizer import Visualizer
+
         pygame.init()
         self.clock = pygame.time.Clock()
         self.visualizer = Visualizer(self.manager)
@@ -85,6 +102,7 @@ class MiningEnv(gym.Env):
     def _handle_pygame_events(self):
         """Process and respond to pygame events."""
         import pygame
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (
                 event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
@@ -106,6 +124,7 @@ class MiningEnv(gym.Env):
         super().reset(seed=seed)
         # Recreate manager to reset state
         self.manager = FMSManager()
+        self.step_count = 0
         if self.visualizer:
             # Reuse existing visualizer instance with new manager
             self.visualizer.sim = self.manager
@@ -134,6 +153,7 @@ class MiningEnv(gym.Env):
         self.manager.update()
         if self.visualizer and not self._visual_paused:
             import pygame
+
             self.clock.tick(30)
             self._handle_pygame_events()
             try:
@@ -145,9 +165,19 @@ class MiningEnv(gym.Env):
                 self.clock = None
         obs = self._get_observation()
         reward = self._calculate_reward()
-        terminated = False
-        truncated = False
-        info = {"action_mask": self.valid_action_mask}
+        self.step_count += 1
+        production = (
+            self.manager.crusher.total_processed + self.manager.dump.total_dumped
+        )
+        terminated = production >= self.target_production
+        truncated = self.step_count >= self.max_steps
+        info = {
+            "action_mask": self.valid_action_mask,
+            "throughput": production,
+            "fleet_utilization": np.mean(
+                [1.0 if not t.is_available() else 0.0 for t in self.manager.trucks]
+            ),
+        }
         return obs, reward, terminated, truncated, info
 
     def render(self):
@@ -165,6 +195,7 @@ class MiningEnv(gym.Env):
     def close(self):
         if self.visualizer:
             import pygame
+
             pygame.quit()
             self.visualizer = None
             self.clock = None
@@ -181,7 +212,9 @@ class MiningEnv(gym.Env):
 
         production = delta_waste + 2.0 * delta_mineral
 
-        working = np.mean([1.0 if not t.is_available() else 0.0 for t in self.manager.trucks])
+        working = np.mean(
+            [1.0 if not t.is_available() else 0.0 for t in self.manager.trucks]
+        )
         queue_penalty = (
             len(self.manager.crusher.queue)
             + len(self.manager.dump.queue)
@@ -190,7 +223,9 @@ class MiningEnv(gym.Env):
         return production + working - 0.1 * queue_penalty
 
     def _get_observation(self) -> np.ndarray:
-        raw_obs = np.array(self.manager.get_extended_observation_vector(), dtype=np.float32)
+        raw_obs = np.array(
+            self.manager.get_extended_observation_vector(), dtype=np.float32
+        )
         self.running_stats.update(raw_obs[None, :])
         obs = self.running_stats.normalize(raw_obs)
 

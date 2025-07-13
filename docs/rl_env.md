@@ -25,3 +25,6 @@ The reward is based on incremental production with efficiency bonuses and queue 
 reward = (delta_waste + 2 * delta_mineral) + fleet_utilisation - 0.1 * queue_penalty
 ```
 This favours mineral production and keeps the fleet working while discouraging long queues.
+
+## Episode Termination
+Episodes end when either a production target or a step limit is reached. By default the environment terminates after accumulating **400t** of total throughput or **800** steps, whichever happens first. These values can be customised via the `max_steps` and `target_production` parameters when creating the environment.

@@ -9,6 +9,7 @@ from stable_baselines3.common.callbacks import (
     StopTrainingOnNoModelImprovement,
     CheckpointCallback,
     CallbackList,
+    BaseCallback,
 )
 from stable_baselines3.common.monitor import Monitor
 
@@ -19,6 +20,22 @@ ALGOS = {
     "ppo": PPO,
     "dqn": DQN,
 }
+
+
+class TensorboardMetricsCallback(BaseCallback):
+    """Log custom environment metrics to TensorBoard."""
+
+    def _on_step(self) -> bool:
+        infos = self.locals.get("infos")
+        if infos:
+            info = infos[0]
+            throughput = info.get("throughput")
+            util = info.get("fleet_utilization")
+            if throughput is not None:
+                self.logger.record("rollout/throughput", float(throughput))
+            if util is not None:
+                self.logger.record("rollout/utilization", float(util))
+        return True
 
 
 class VisualEvalCallback(EvalCallback):
@@ -39,7 +56,7 @@ class VisualEvalCallback(EvalCallback):
 
 
 def make_env(render_mode: str) -> gym.Env:
-    env = MiningEnv(render_mode=render_mode)
+    env = MiningEnv(render_mode=render_mode, max_steps=800, target_production=400)
     return Monitor(env)
 
 
@@ -50,24 +67,28 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
     # Evaluation environment should be headless to speed up training
     eval_env = make_env("headless")
 
-    stop_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5, min_evals=5, verbose=1)
+    stop_callback = StopTrainingOnNoModelImprovement(
+        max_no_improvement_evals=5, min_evals=5, verbose=1
+    )
     eval_callback = VisualEvalCallback(
         env,
         eval_env=eval_env,
         callback_after_eval=stop_callback,
         best_model_save_path=os.path.join(logdir, "best"),
         log_path=logdir,
-        eval_freq=10000,
-        n_eval_episodes=3,
+        eval_freq=5000,
+        n_eval_episodes=2,
     )
 
     checkpoint_callback = CheckpointCallback(
-        save_freq=1000,
+        save_freq=10000,
         save_path=os.path.join(logdir, "checkpoints"),
         name_prefix=algo_name,
     )
 
-    callbacks = CallbackList([checkpoint_callback, eval_callback])
+    tb_callback = TensorboardMetricsCallback()
+
+    callbacks = CallbackList([checkpoint_callback, eval_callback, tb_callback])
 
     model = algo_class(
         "MlpPolicy",
@@ -108,4 +129,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
