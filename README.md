@@ -100,6 +100,11 @@ python main.py --visual
 python main.py
 ```
 
+** TensorBoard:**
+```bash
+tensorboard --logdir training_logs/tb
+```
+
 ### Controles Interactivos
 - **S**: Toggle información de velocidades en segmentos
 - **R**: Toggle rutas activas de camiones
