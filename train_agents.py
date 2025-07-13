@@ -73,6 +73,12 @@ def train(
     algo_class = PPO
     env = make_env(render_mode=render_mode, max_steps=1000000)
 
+    stats_file = os.path.join(logdir, "ppo_final_stats.npz")
+    if resume_from is not None:
+        stats_path = stats_file if os.path.exists(stats_file) else resume_from.replace(".zip", "_stats.npz")
+        if os.path.exists(stats_path):
+            env.env.load_running_stats_from_file(stats_path)
+
     checkpoint_callback = CheckpointCallback(
         save_freq=10000,
         save_path=os.path.join(logdir, "checkpoints"),
@@ -111,6 +117,7 @@ def train(
         print("Training interrupted. Saving model...")
     finally:
         model.save(os.path.join(logdir, "ppo_final"))
+        env.env.save_running_stats(stats_file)
         env.close()
 
 

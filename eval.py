@@ -25,12 +25,19 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     model = PPO.load(model_path)
     env = MiningEnv(render_mode=render_mode, max_steps=steps, target_production=40000)
     obs, _ = env.reset()
+    stats_path = model_path.replace(".zip", "_stats.npz")
+    if os.path.exists(stats_path):
+        env.load_running_stats_from_file(stats_path)
+        obs = env.get_normalised_observation()
 
     for _ in range(steps):
         action, _ = model.predict(obs, deterministic=True)
         obs, _, done, truncated, _ = env.step(action)
         if done or truncated:
             obs, _ = env.reset()
+            if os.path.exists(stats_path):
+                env.load_running_stats_from_file(stats_path)
+                obs = env.get_normalised_observation()
 
     env.close()
 
