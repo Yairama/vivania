@@ -118,8 +118,8 @@ def train(
 
     try:
         model.learn(total_timesteps=timesteps, callback=callbacks)
-    except KeyboardInterrupt:
-        print("Training interrupted. Saving model...")
+    except Exception as e:
+        print("Training interrupted. Saving model...", e)
     finally:
         model.save(os.path.join(logdir, "ppo_final"))
         env.save(stats_file)
