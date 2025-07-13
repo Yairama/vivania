@@ -6,15 +6,24 @@ import heapq
 
 class Dijkstra:
     def __init__(self, nodes_dict: dict):
-        self.graph = {}
-        
-        for key in nodes_dict.keys():
-            connections_dict = []
-            for segment in nodes_dict[key].segments:
-                neighbor_name = segment.destination.name
-                distance = segment.distance
-                connections_dict.append((neighbor_name, distance))
-            self.graph[key] = connections_dict
+        """Build an adjacency list from the provided ``nodes_dict``.
+
+        ``nodes_dict`` should map node names to ``Node`` objects. In some rare
+        situations the input may contain non-string keys (for example when
+        loading malformed data).  To make the structure robust we coerce all
+        keys and neighbour names to ``str`` so that they can safely be used as
+        dictionary keys.
+        """
+        self.graph: dict[str, list[tuple[str, float]]] = {}
+
+        for key, node in nodes_dict.items():
+            key = str(key)
+            connections: list[tuple[str, float]] = []
+            for segment in node.segments:
+                neighbor = str(segment.destination.name)
+                distance = float(segment.distance)
+                connections.append((neighbor, distance))
+            self.graph[key] = connections
 
     def get_graph(self):
         return self.graph
@@ -23,8 +32,8 @@ class Dijkstra:
         """Classic Dijkstra using a priority queue for stability."""
         graph = self.graph
 
-        dist = {node: np.inf for node in graph}
-        path = {node: [] for node in graph}
+        dist = {node: np.inf for node in graph.keys()}
+        path = {node: [] for node in graph.keys()}
         visited = set()
 
         dist[root] = 0
