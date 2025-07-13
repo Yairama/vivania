@@ -18,6 +18,7 @@ class FMSManager:
         self.dijkstra = Dijkstra(self.map.nodes)
 
         # Crear flota de camiones
+        # Los primeros 6 mantienen las especificaciones originales
         self.trucks = [
             Truck(1, 200, self.map.nodes["parking"], efficiency=0.85),
             Truck(2, 200, self.map.nodes["parking"], efficiency=0.75),
@@ -25,6 +26,22 @@ class FMSManager:
             Truck(4, 200, self.map.nodes["parking"], efficiency=0.88),
             Truck(5, 200, self.map.nodes["parking"], efficiency=0.82),
             Truck(6, 200, self.map.nodes["parking"], efficiency=0.78),
+
+            # Nuevos camiones con mayor eficiencia y 180t de capacidad
+            Truck(7, 180, self.map.nodes["parking"], efficiency=0.91),
+            Truck(8, 180, self.map.nodes["parking"], efficiency=0.92),
+            Truck(9, 180, self.map.nodes["parking"], efficiency=0.93),
+            Truck(10, 180, self.map.nodes["parking"], efficiency=0.94),
+            Truck(11, 180, self.map.nodes["parking"], efficiency=0.95),
+            Truck(12, 180, self.map.nodes["parking"], efficiency=0.96),
+            Truck(13, 180, self.map.nodes["parking"], efficiency=0.97),
+            Truck(14, 180, self.map.nodes["parking"], efficiency=0.98),
+            Truck(15, 180, self.map.nodes["parking"], efficiency=0.99),
+            Truck(16, 180, self.map.nodes["parking"], efficiency=1.00),
+            Truck(17, 180, self.map.nodes["parking"], efficiency=1.01),
+            Truck(18, 180, self.map.nodes["parking"], efficiency=1.02),
+            Truck(19, 180, self.map.nodes["parking"], efficiency=1.03),
+            Truck(20, 180, self.map.nodes["parking"], efficiency=1.04),
         ]
 
         # Crear palas
