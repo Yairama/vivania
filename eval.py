@@ -2,6 +2,7 @@ import argparse
 import os
 
 from stable_baselines3 import PPO
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 from rl.mining_env import MiningEnv
@@ -27,15 +28,11 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     stats_path = os.path.join(os.path.dirname(model_path), "vecnormalize.pkl")
 
     def _init():
-        return MiningEnv(render_mode=render_mode, max_steps=steps, target_production=40000)
+        return Monitor(MiningEnv(render_mode=render_mode, max_steps=steps, target_production=40000))
 
     env = DummyVecEnv([_init])
-    if os.path.exists(stats_path):
-        env = VecNormalize.load(stats_path, env)
-        env.training = False
-    else:
-        env = VecNormalize(env, training=False, norm_obs=True, norm_reward=False)
-
+    env = VecNormalize.load(stats_path, env)
+    env.training = False
     obs = env.reset()
 
     for _ in range(steps):
