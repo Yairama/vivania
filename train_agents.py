@@ -18,11 +18,16 @@ from rl.mining_env import MiningEnv
 
 
 class TensorboardMetricsCallback(BaseCallback):
-    """Log custom environment metrics and checkpoint info to TensorBoard."""
+    """Log custom metrics and save env stats alongside checkpoints."""
 
-    def __init__(self, checkpoint_callback: CheckpointCallback | None = None):
+    def __init__(
+        self,
+        checkpoint_callback: CheckpointCallback | None = None,
+        stats_path: str | None = None,
+    ):
         super().__init__()
         self.checkpoint_callback = checkpoint_callback
+        self.stats_path = stats_path
 
     def _on_step(self) -> bool:
         infos = self.locals.get("infos")
@@ -55,6 +60,8 @@ class TensorboardMetricsCallback(BaseCallback):
                 self.logger.record(
                     "checkpoint/num_timesteps", ckpt_cb.num_timesteps
                 )
+                if self.stats_path is not None:
+                    self.training_env.save(self.stats_path)
         return True
 
 
@@ -90,7 +97,9 @@ def train(
         name_prefix="ppo",
     )
 
-    tb_callback = TensorboardMetricsCallback(checkpoint_callback)
+    tb_callback = TensorboardMetricsCallback(
+        checkpoint_callback=checkpoint_callback, stats_path=stats_file
+    )
 
     callbacks = CallbackList([checkpoint_callback, tb_callback])
 
