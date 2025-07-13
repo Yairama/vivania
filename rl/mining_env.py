@@ -52,6 +52,9 @@ class MiningEnv(gym.Env):
         Maximum number of steps per episode before truncation.
     target_production : float, optional
         Total tonnage after which the episode terminates.
+    freeze_stats : bool, optional
+        If ``True`` the running normalisation statistics are kept fixed and do
+        not update during ``reset`` or ``step``. Useful for evaluation.
     """
 
     metadata = {"render.modes": ["human"]}
@@ -61,6 +64,7 @@ class MiningEnv(gym.Env):
         render_mode: str = "headless",
         max_steps: int = 800,
         target_production: float = 400.0,
+        freeze_stats: bool = False,
     ):
         super().__init__()
         self.render_mode = render_mode
@@ -68,6 +72,7 @@ class MiningEnv(gym.Env):
         self.max_steps = max_steps
         self.target_production = target_production
         self.step_count = 0
+        self.freeze_stats = freeze_stats
         self.visualizer = None
         self.clock = None
         self._visual_paused = False
@@ -138,7 +143,8 @@ class MiningEnv(gym.Env):
         if self.visualizer:
             # Reuse existing visualizer instance with new manager
             self.visualizer.sim = self.manager
-        self.running_stats = RunningStats(self.obs_dim)
+        if not self.freeze_stats:
+            self.running_stats = RunningStats(self.obs_dim)
         self.last_processed = 0.0
         self.last_dumped = 0.0
         self.last_mineral_lost = 0.0
@@ -253,7 +259,8 @@ class MiningEnv(gym.Env):
         raw_obs = np.array(
             self.manager.get_extended_observation_vector(), dtype=np.float32
         )
-        self.running_stats.update(raw_obs[None, :])
+        if not self.freeze_stats:
+            self.running_stats.update(raw_obs[None, :])
         obs = self.running_stats.normalize(raw_obs)
 
         self._update_action_mask()
