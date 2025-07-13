@@ -74,8 +74,8 @@ class MiningEnv(gym.Env):
         if self.render_mode == "visual":
             self._init_pygame()
 
-        # Observation space: extended 54-dimensional vector
-        self.obs_dim = 54
+        # Observation space dimension based on fleet size
+        self.obs_dim = len(self.manager.get_extended_observation_vector())
         obs_low = np.zeros(self.obs_dim, dtype=np.float32)
         obs_high = np.ones(self.obs_dim, dtype=np.float32) * np.inf
         self.observation_space = gym.spaces.Box(
@@ -124,6 +124,13 @@ class MiningEnv(gym.Env):
         super().reset(seed=seed)
         # Recreate manager to reset state
         self.manager = FMSManager()
+        # Recompute observation space in case fleet size changed
+        self.obs_dim = len(self.manager.get_extended_observation_vector())
+        self.observation_space = gym.spaces.Box(
+            low=np.zeros(self.obs_dim, dtype=np.float32),
+            high=np.ones(self.obs_dim, dtype=np.float32) * np.inf,
+            dtype=np.float32,
+        )
         self.step_count = 0
         if self.visualizer:
             # Reuse existing visualizer instance with new manager

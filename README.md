@@ -21,7 +21,7 @@ El único elemento controlable del simulador es **la asignación de destinos de 
 ### Componentes Principales
 
 #### **Equipos Móviles**
-- **Trucks (Camiones)**: Flota de 6 camiones CAT 797 con capacidades de 200t
+- **Trucks (Camiones)**: Flota de 20 camiones (6 de 200t y 14 de 180t) con eficiencia individual
   - Estados: `waiting_assignment`, `moving_to_shovel`, `loading`, `moving_to_dump`, `dumping`, `returning`
   - Atributos: efficiency (0.75-0.90), velocidad variable por segmento
   - Control de tráfico: distancia mínima entre camiones (30m)
@@ -141,7 +141,7 @@ mining_simulation/
 
 ### Environment: `MiningEnv`
 
-**Observation Space** (54 dimensiones normalizadas):
+**Observation Space** (124 dimensiones normalizadas):
 - Estado global: tick, producción total, camiones disponibles
 - Colas y estado de crusher, dump y palas
 - Estado detallado de cada camión (task, carga, eficiencia, distancias)
@@ -274,7 +274,7 @@ for _ in range(1000):
 ## ✅ Funcionalidades Implementadas
 
 ### **Sistema de Simulación Completo**
-- [x] Modelado realista de equipos mineros (6 camiones, 6 palas, crusher, dump)
+- [x] Modelado realista de equipos mineros (20 camiones, 6 palas, crusher, dump)
 - [x] Red vial con 25 nodos y velocidades diferenciadas por tipo de ruta
 - [x] Control de tráfico y distancias mínimas entre camiones (30m)
 - [x] Gestión de colas FIFO con capacidades limitadas por equipo
@@ -290,7 +290,7 @@ for _ in range(1000):
 - [x] Leyenda completa y controles interactivos
 
 ### **Sistema de Reinforcement Learning**
-- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space de 54 dimensiones
+- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space de 124 dimensiones
 - [x] Action space discreto (9 acciones) con action masking inteligente
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento completo con PPO, A2C, DQN
