@@ -262,20 +262,7 @@ python train_agents.py --timesteps 100000
 ### **3. Evaluación de Modelos**
 ```bash
 # Cargar modelo entrenado y evaluar
-python -c "
-from stable_baselines3 import PPO
-from rl.mining_env import MiningEnv
-
-model = PPO.load('training_logs/best/best_model')
-env = MiningEnv(render_mode='visual')
-obs, _ = env.reset()
-
-for _ in range(1000):
-    action, _ = model.predict(obs, deterministic=True)
-    obs, reward, done, truncated, info = env.step(action)
-    if done or truncated:
-        obs, _ = env.reset()
-"
+python eval.py --from training_logs/best/best_model.zip --mode visual --steps 1000
 ```
 
 ## ✅ Funcionalidades Implementadas
