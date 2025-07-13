@@ -47,6 +47,9 @@ class Dijkstra:
 
             for v, l in graph[u]:
                 new_d = d + l
+                # Skip edges to unknown nodes
+                if v not in dist:
+                    continue
                 if new_d < dist[v]:
                     dist[v] = new_d
                     path[v] = path[u] + [v]
