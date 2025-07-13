@@ -55,15 +55,15 @@ class VisualEvalCallback(EvalCallback):
                 self.train_env.resume_visualizer()
 
 
-def make_env(render_mode: str) -> gym.Env:
-    env = MiningEnv(render_mode=render_mode, max_steps=800, target_production=400)
+def make_env(render_mode: str, max_steps=800) -> gym.Env:
+    env = MiningEnv(render_mode=render_mode, max_steps=max_steps, target_production=40000)
     return Monitor(env)
 
 
 def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     algo_class = ALGOS[algo_name]
-    env = make_env(render_mode)
+    env = make_env(render_mode=render_mode, max_steps=1000000)
     # Evaluation environment should be headless to speed up training
     eval_env = make_env("headless")
 
