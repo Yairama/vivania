@@ -58,8 +58,13 @@ class Dijkstra:
                 
                 # VALIDAR TIPOS EXPLÍCITAMENTE
                 if not isinstance(v, str):
-                    logger.error(f"❌ Neighbor no es string: {v} (tipo: {type(v)}) desde {u}")
-                    continue
+                    logger.error(
+                        f"❌ Neighbor no es string: {v} (tipo: {type(v)}) desde {u}"
+                    )
+                    try:
+                        v = str(v)
+                    except Exception:
+                        continue
                     
                 if not isinstance(l, (int, float)):
                     logger.error(f"❌ Distancia no es numérica: {l} (tipo: {type(l)}) entre {u} y {v}")
