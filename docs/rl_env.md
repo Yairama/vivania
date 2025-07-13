@@ -20,11 +20,16 @@ A discrete action chooses among nine high level commands:
 Invalid actions are masked via the `action_mask` entry in `info`.
 
 ## Reward
-The reward is based on incremental production with efficiency bonuses and queue penalties:
+The reward is based on incremental production with efficiency bonuses and several penalties:
 ```
-reward = (delta_waste + 2 * delta_mineral) + fleet_utilisation - 0.1 * queue_penalty
+reward = (delta_waste + 2 * delta_mineral)
+         + fleet_utilisation
+         - 0.1 * queue_penalty
+         - 0.5 * delta_hang_time
+         - 2.0 * delta_mineral_lost
+         - 1.0 * delta_waste_in_crusher
 ```
-This favours mineral production and keeps the fleet working while discouraging long queues.
+This favours mineral production, keeps the fleet working and penalises idle shovels or incorrect dumping of material.
 
 ## Episode Termination
 Episodes end when either a production target or a step limit is reached. By default the environment terminates after accumulating **400t** of total throughput or **800** steps, whichever happens first. These values can be customised via the `max_steps` and `target_production` parameters when creating the environment.

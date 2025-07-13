@@ -26,9 +26,14 @@ class Shovel:
         self.timer = 0
         self.passes_required = 0
         self.passes_done = 0
+        # Tiempo que la pala permanece inactiva sin camiones
+        self.hang_time = 0
         
     def update(self):
         """Process loading logic for the shovel."""
+        if not self.current_truck and not self.queue:
+            # Shovel idle without trucks
+            self.hang_time += 1
         if not self.current_truck and self.queue:
             # Start loading the next truck in queue
             self.current_truck = self.queue.pop(0)
