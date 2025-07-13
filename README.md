@@ -168,28 +168,25 @@ reward = (delta_waste + 2 * delta_mineral) + fleet_utilisation - 0.1 * queue_pen
 
 **Entrenar con PPO (recomendado):**
 ```bash
-python train_agents.py --algo ppo --timesteps 100000 --mode headless
+python train_agents.py --timesteps 100000 --mode headless
 ```
 
 **Entrenar con visualización (debug):**
 ```bash
-python train_agents.py --algo ppo --timesteps 10000 --mode visual
+python train_agents.py --timesteps 10000 --mode visual
 ```
 
 **Retomar desde un checkpoint:**
 ```bash
-python train_agents.py --algo ppo --timesteps 50000 --resume-from training_logs/checkpoints
+python train_agents.py --timesteps 50000 --resume-from training_logs/checkpoints
 ```
 
-**Algoritmos disponibles:**
+**Algoritmo disponible:**
 - **PPO**: Proximal Policy Optimization (recomendado)
-- **A2C**: Advantage Actor-Critic
-- **DQN**: Deep Q-Network
 
 **Características del entrenamiento:**
 - Evaluación cada 5,000 timesteps
 - Checkpoints automáticos cada 10,000 timesteps
-- Early stopping si no hay mejora en 5 evaluaciones
 - Logs de TensorBoard para métricas personalizadas
 - Guardado automático del mejor modelo
 - Retomar entrenamiento desde un checkpoint con `--resume-from`
@@ -256,7 +253,7 @@ python main.py --visual
 
 ### **2. Entrenamiento de RL**
 ```bash
-python train_agents.py --algo ppo --timesteps 100000
+python train_agents.py --timesteps 100000
 ```
 - Desarrollo de políticas de asignación inteligentes
 - Comparación RL vs heurísticas tradicionales
@@ -304,9 +301,9 @@ for _ in range(1000):
 - [x] Environment Gymnasium compatible (`MiningEnv`) con observation space de 124 dimensiones
 - [x] Action space discreto (9 acciones) con action masking inteligente
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
-- [x] Script de entrenamiento completo con PPO, A2C, DQN
+- [x] Script de entrenamiento con PPO
 - [x] Callbacks de evaluación automática cada 5k timesteps
-- [x] Checkpoints automáticos y early stopping
+- [x] Checkpoints automáticos
 - [x] Integración completa con TensorBoard para monitoreo
 - [x] Capacidad de reanudar entrenamientos desde checkpoints
 

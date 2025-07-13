@@ -3,10 +3,9 @@ import os
 
 import gym
 import torch
-from stable_baselines3 import A2C, PPO, DQN
+from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
     EvalCallback,
-    StopTrainingOnNoModelImprovement,
     CheckpointCallback,
     CallbackList,
     BaseCallback,
@@ -15,11 +14,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from rl.mining_env import MiningEnv
 
-ALGOS = {
-    "a2c": A2C,
-    "ppo": PPO,
-    "dqn": DQN,
-}
+
 
 
 class TensorboardMetricsCallback(BaseCallback):
@@ -70,25 +65,20 @@ def make_env(render_mode: str, max_steps=800) -> gym.Env:
 
 
 def train(
-    algo_name: str,
     timesteps: int,
     logdir: str,
     render_mode: str,
     resume_from: str | None = None,
 ):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    algo_class = ALGOS[algo_name]
+    algo_class = PPO
     env = make_env(render_mode=render_mode, max_steps=1000000)
     # Evaluation environment should be headless to speed up training
     eval_env = make_env("headless")
 
-    stop_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=5, min_evals=5, verbose=1
-    )
     eval_callback = VisualEvalCallback(
         env,
         eval_env=eval_env,
-        callback_after_eval=stop_callback,
         best_model_save_path=os.path.join(logdir, "best"),
         log_path=logdir,
         eval_freq=5000,
@@ -98,7 +88,7 @@ def train(
     checkpoint_callback = CheckpointCallback(
         save_freq=10000,
         save_path=os.path.join(logdir, "checkpoints"),
-        name_prefix=algo_name,
+        name_prefix="ppo",
     )
 
     tb_callback = TensorboardMetricsCallback()
@@ -132,14 +122,13 @@ def train(
     except KeyboardInterrupt:
         print("Training interrupted. Saving model...")
     finally:
-        model.save(os.path.join(logdir, f"{algo_name}_final"))
+        model.save(os.path.join(logdir, "ppo_final"))
         env.close()
         eval_env.close()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--algo", choices=list(ALGOS.keys()), default="ppo")
     parser.add_argument("--timesteps", type=int, default=100000)
     parser.add_argument("--logdir", type=str, default="training_logs")
     parser.add_argument(
@@ -157,7 +146,7 @@ def main():
     args = parser.parse_args()
 
     os.makedirs(args.logdir, exist_ok=True)
-    train(args.algo, args.timesteps, args.logdir, args.mode, args.resume_from)
+    train(args.timesteps, args.logdir, args.mode, args.resume_from)
 
 
 if __name__ == "__main__":
