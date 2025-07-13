@@ -31,10 +31,19 @@ class TensorboardMetricsCallback(BaseCallback):
             info = infos[0]
             throughput = info.get("throughput")
             util = info.get("fleet_utilization")
+            hang = info.get("hang_time")
+            lost = info.get("ore_lost")
+            wrong = info.get("waste_to_crusher")
             if throughput is not None:
                 self.logger.record("rollout/throughput", float(throughput))
             if util is not None:
                 self.logger.record("rollout/utilization", float(util))
+            if hang is not None:
+                self.logger.record("rollout/hang_time", float(hang))
+            if lost is not None:
+                self.logger.record("rollout/ore_lost", float(lost))
+            if wrong is not None:
+                self.logger.record("rollout/waste_to_crusher", float(wrong))
         return True
 
 

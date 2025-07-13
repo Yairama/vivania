@@ -89,6 +89,9 @@ class MiningEnv(gym.Env):
         self.running_stats = RunningStats(self.obs_dim)
         self.last_processed = 0.0
         self.last_dumped = 0.0
+        self.last_hang_time = 0
+        self.last_mineral_lost = 0
+        self.last_waste_crusher = 0
 
     def _init_pygame(self):
         """Initialize pygame and the visualizer."""
@@ -138,6 +141,9 @@ class MiningEnv(gym.Env):
         self.running_stats = RunningStats(self.obs_dim)
         self.last_processed = 0.0
         self.last_dumped = 0.0
+        self.last_hang_time = 0
+        self.last_mineral_lost = 0
+        self.last_waste_crusher = 0
         obs = self._get_observation()
         info = {"action_mask": self.valid_action_mask}
         return obs, info
@@ -184,6 +190,9 @@ class MiningEnv(gym.Env):
             "fleet_utilization": np.mean(
                 [1.0 if not t.is_available() else 0.0 for t in self.manager.trucks]
             ),
+            "hang_time": self.manager.get_total_shovel_hang_time(),
+            "ore_lost": self.manager.dump.mineral_lost,
+            "waste_to_crusher": self.manager.crusher.waste_received,
         }
         return obs, reward, terminated, truncated, info
 
@@ -217,6 +226,13 @@ class MiningEnv(gym.Env):
         self.last_processed = self.manager.crusher.total_processed
         self.last_dumped = self.manager.dump.total_dumped
 
+        delta_hang = self.manager.get_total_shovel_hang_time() - self.last_hang_time
+        delta_lost = self.manager.dump.mineral_lost - self.last_mineral_lost
+        delta_waste_crusher = self.manager.crusher.waste_received - self.last_waste_crusher
+        self.last_hang_time = self.manager.get_total_shovel_hang_time()
+        self.last_mineral_lost = self.manager.dump.mineral_lost
+        self.last_waste_crusher = self.manager.crusher.waste_received
+
         production = delta_waste + 2.0 * delta_mineral
 
         working = np.mean(
@@ -227,7 +243,8 @@ class MiningEnv(gym.Env):
             + len(self.manager.dump.queue)
             + sum(len(s.queue) for s in self.manager.shovels)
         )
-        return production + working - 0.1 * queue_penalty
+        penalty = 0.1 * queue_penalty + 0.5 * delta_hang + delta_waste_crusher + 2.0 * delta_lost
+        return production + working - penalty
 
     def _get_observation(self) -> np.ndarray:
         raw_obs = np.array(

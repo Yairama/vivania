@@ -26,6 +26,16 @@ class EnvTest(unittest.TestCase):
         env.close()
         self.assertTrue(done)
 
+    def test_info_metrics(self):
+        env = MiningEnv(max_steps=1)
+        _, info = env.reset()
+        self.assertIn("action_mask", info)
+        _, _, _, _, info = env.step(0)
+        self.assertIn("hang_time", info)
+        self.assertIn("ore_lost", info)
+        self.assertIn("waste_to_crusher", info)
+        env.close()
+
 
 if __name__ == "__main__":
     unittest.main()

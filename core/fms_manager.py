@@ -59,6 +59,7 @@ class FMSManager:
 
         self.tick_count = 0
         self._verify_connectivity()
+        self.last_total_hang = 0
 
     # ------------------------------------------------------------------
     # Actualizacion del estado (sin logica de asignacion)
@@ -195,9 +196,16 @@ class FMSManager:
             'tick_count': self.tick_count,
             'mineral_processed': self.crusher.total_processed,
             'waste_dumped': self.dump.total_dumped,
+            'ore_lost': self.dump.mineral_lost,
+            'waste_to_crusher': self.crusher.waste_received,
+            'shovel_hang_time': self.get_total_shovel_hang_time(),
             'trucks_moving': len([t for t in self.trucks if t.is_moving()]),
             'trucks_waiting': len([t for t in self.trucks if 'waiting' in t.task])
         }
+
+    def get_total_shovel_hang_time(self) -> int:
+        """Return aggregated hang time across all shovels."""
+        return sum(s.get_hang_time() for s in self.shovels)
 
     # ------------------------------------------------------------------
     # Additional helper functions for advanced RL

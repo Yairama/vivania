@@ -26,9 +26,13 @@ class Shovel:
         self.timer = 0
         self.passes_required = 0
         self.passes_done = 0
+        self.total_hang_time = 0
         
     def update(self):
         """Process loading logic for the shovel."""
+        if not self.current_truck and not self.queue:
+            self.total_hang_time += 1
+
         if not self.current_truck and self.queue:
             # Start loading the next truck in queue
             self.current_truck = self.queue.pop(0)
@@ -70,4 +74,8 @@ class Shovel:
     def can_accept_truck(self):
         """Verifica si la pala puede aceptar más camiones"""
         return len(self.queue) < 3  # Máximo 3 camiones en cola
+
+    def get_hang_time(self) -> int:
+        """Return accumulated hang time of this shovel."""
+        return self.total_hang_time
 

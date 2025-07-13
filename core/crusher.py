@@ -9,6 +9,7 @@ class Crusher:
         self.current_truck = None
         self.timer = 0
         self.total_processed = 0
+        self.waste_received = 0
         
     def update(self):
         if not self.current_truck and self.queue:
@@ -22,6 +23,8 @@ class Crusher:
                 # Procesar material
                 if self.current_truck.material_type == 'mineral':
                     self.total_processed += self.current_truck.current_load
+                else:
+                    self.waste_received += self.current_truck.current_load
                     
                 self.current_truck.finish_dumping()
                 self.current_truck = None

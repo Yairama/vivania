@@ -8,6 +8,7 @@ class Dump:
         self.current_truck = None
         self.timer = 0
         self.total_dumped = 0
+        self.mineral_lost = 0
         
     def update(self):
         if not self.current_truck and self.queue:
@@ -20,6 +21,8 @@ class Dump:
             if self.timer <= 0:
                 # Registrar material descargado
                 self.total_dumped += self.current_truck.current_load
+                if self.current_truck.material_type == 'mineral':
+                    self.mineral_lost += self.current_truck.current_load
                 self.current_truck.finish_dumping()
                 self.current_truck = None
                 
