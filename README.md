@@ -153,7 +153,7 @@ mining_simulation/
 - Agregados espaciales: distancias promedio y utilización de flota
 
 **Action Space**:
-- 9 acciones discretas con action masking
+- 9 acciones discretas
 - 0: No-op
 - 1-6: Enviar camión vacío a cada pala
 - 7: Enviar camión cargado al crusher
@@ -285,7 +285,7 @@ python eval.py --from training_logs/best/best_model.zip --mode visual --steps 10
 
 ### **Sistema de Reinforcement Learning**
 - [x] Environment Gymnasium compatible (`MiningEnv`) con observation space de 124 dimensiones
-- [x] Action space discreto (9 acciones) con action masking inteligente
+- [x] Action space discreto (9 acciones)
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento con PPO
  - [x] Checkpoints automáticos
@@ -373,8 +373,7 @@ def _calculate_reward(self) -> float:
 - **Performance optimized**: Modo headless para entrenamiento RL intensivo
 
 ### **Consideraciones de RL**
-- **Normalización automática**: Observations normalizadas usando running statistics
-- **Action masking**: Solo acciones válidas disponibles en cada timestep
+- **Normalización automática**: Observations normalizadas usando `VecNormalize`
 - **Episode management**: Terminación por producción objetivo (400t) o límite de pasos (800)
 - **Reward engineering**: Balance entre throughput, eficiencia y prevención de deadlocks
 

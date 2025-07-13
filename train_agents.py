@@ -10,6 +10,7 @@ from stable_baselines3.common.callbacks import (
     BaseCallback,
 )
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 from rl.mining_env import MiningEnv
 
@@ -58,9 +59,18 @@ class TensorboardMetricsCallback(BaseCallback):
 
 
 
-def make_env(render_mode: str, max_steps=800) -> gym.Env:
-    env = MiningEnv(render_mode=render_mode, max_steps=max_steps, target_production=40000)
-    return Monitor(env)
+def make_env(render_mode: str, max_steps=800, training=True, stats_path: str | None = None):
+    def _init():
+        env = MiningEnv(render_mode=render_mode, max_steps=max_steps, target_production=40000)
+        return Monitor(env)
+
+    env = DummyVecEnv([_init])
+    if stats_path and os.path.exists(stats_path):
+        env = VecNormalize.load(stats_path, env)
+        env.training = training
+    else:
+        env = VecNormalize(env, training=training, norm_obs=True, norm_reward=False)
+    return env
 
 
 def train(
@@ -71,13 +81,8 @@ def train(
 ):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     algo_class = PPO
-    env = make_env(render_mode=render_mode, max_steps=1000000)
-
-    stats_file = os.path.join(logdir, "ppo_final_stats.npz")
-    if resume_from is not None:
-        stats_path = stats_file if os.path.exists(stats_file) else resume_from.replace(".zip", "_stats.npz")
-        if os.path.exists(stats_path):
-            env.env.load_running_stats_from_file(stats_path)
+    stats_file = os.path.join(logdir, "vecnormalize.pkl")
+    env = make_env(render_mode=render_mode, max_steps=1000000, training=True, stats_path=stats_file if os.path.exists(stats_file) else None)
 
     checkpoint_callback = CheckpointCallback(
         save_freq=10000,
@@ -117,7 +122,7 @@ def train(
         print("Training interrupted. Saving model...")
     finally:
         model.save(os.path.join(logdir, "ppo_final"))
-        env.env.save_running_stats(stats_file)
+        env.save(stats_file)
         env.close()
 
 
