@@ -3,11 +3,13 @@ class Dump:
     def __init__(self, node, process_time=4):
         self.node = node
         self.process_time = process_time
-        
+
         self.queue = []
         self.current_truck = None
         self.timer = 0
         self.total_dumped = 0
+        # Track mineral incorrectly dumped here
+        self.total_mineral_dumped = 0
         
     def update(self):
         if not self.current_truck and self.queue:
@@ -19,7 +21,10 @@ class Dump:
             self.timer -= 1
             if self.timer <= 0:
                 # Registrar material descargado
-                self.total_dumped += self.current_truck.current_load
+                if self.current_truck.material_type == 'waste':
+                    self.total_dumped += self.current_truck.current_load
+                else:
+                    self.total_mineral_dumped += self.current_truck.current_load
                 self.current_truck.finish_dumping()
                 self.current_truck = None
                 
