@@ -167,7 +167,7 @@ class MiningEnv(gym.Env):
         if self.visualizer and not self._visual_paused:
             import pygame
 
-            self.clock.tick(30)
+            self.clock.tick(60)
             self._handle_pygame_events()
             try:
                 self.visualizer.draw()
