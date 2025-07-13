@@ -23,7 +23,7 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     """Run evaluation of a saved model for a number of steps."""
     model_path = _resolve_path(model_path)
     model = PPO.load(model_path)
-    env = MiningEnv(render_mode=render_mode)
+    env = MiningEnv(render_mode=render_mode, max_steps=steps, target_production=40000)
     obs, _ = env.reset()
 
     for _ in range(steps):
