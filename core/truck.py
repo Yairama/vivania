@@ -1,5 +1,6 @@
 # core/truck.py (Mejorado con velocidades por segmento)
 import math
+import random
 from config import FOLLOW_DISTANCE
 from logger import get_logger
 
@@ -175,14 +176,20 @@ class Truck:
         )
 
     def add_load(self, amount):
-        """Add material to the truck considering its efficiency."""
+        """Add material to the truck considering its efficiency.
+
+        Allows slight overfill up to 110% of nominal capacity."""
+        max_load = self.capacity * 1.10
         self.current_load = min(
             self.current_load + amount * self.efficiency,
-            self.capacity,
+            max_load,
         )
         
     def finish_loading(self):
-        """Finaliza el proceso de carga"""
+        """Finaliza el proceso de carga aplicando variación realista."""
+        desired = self.capacity * random.uniform(0.97, 1.10)
+        self.current_load = max(self.current_load, desired)
+        self.current_load = min(self.current_load, self.capacity * 1.10)
         self.loading = True
         self.task = "waiting_assignment"
         logger.info(
