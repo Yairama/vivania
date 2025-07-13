@@ -69,7 +69,13 @@ def make_env(render_mode: str, max_steps=800) -> gym.Env:
     return Monitor(env)
 
 
-def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
+def train(
+    algo_name: str,
+    timesteps: int,
+    logdir: str,
+    render_mode: str,
+    resume_from: str | None = None,
+):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     algo_class = ALGOS[algo_name]
     env = make_env(render_mode=render_mode, max_steps=1000000)
@@ -99,15 +105,27 @@ def train(algo_name: str, timesteps: int, logdir: str, render_mode: str):
 
     callbacks = CallbackList([checkpoint_callback, eval_callback, tb_callback])
 
-    model = algo_class(
-        "MlpPolicy",
-        env,
-        verbose=1,
-        tensorboard_log=os.path.join(logdir, "tb"),
-        learning_rate=3e-4,
-        gamma=0.99,
-        device=device,
-    )
+    if resume_from is not None:
+        # If a directory is passed, load the most recent checkpoint inside
+        if os.path.isdir(resume_from):
+            ckpts = [
+                os.path.join(resume_from, f)
+                for f in os.listdir(resume_from)
+                if f.endswith(".zip")
+            ]
+            if ckpts:
+                resume_from = max(ckpts, key=os.path.getmtime)
+        model = algo_class.load(resume_from, env=env, device=device)
+    else:
+        model = algo_class(
+            "MlpPolicy",
+            env,
+            verbose=1,
+            tensorboard_log=os.path.join(logdir, "tb"),
+            learning_rate=3e-4,
+            gamma=0.99,
+            device=device,
+        )
 
     try:
         model.learn(total_timesteps=timesteps, callback=callbacks)
@@ -130,10 +148,16 @@ def main():
         default="headless",
         help="Training mode: with or without visualization",
     )
+    parser.add_argument(
+        "--resume-from",
+        type=str,
+        default=None,
+        help="Path to a saved model or checkpoint to resume from",
+    )
     args = parser.parse_args()
 
     os.makedirs(args.logdir, exist_ok=True)
-    train(args.algo, args.timesteps, args.logdir, args.mode)
+    train(args.algo, args.timesteps, args.logdir, args.mode, args.resume_from)
 
 
 if __name__ == "__main__":

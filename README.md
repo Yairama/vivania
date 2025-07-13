@@ -176,6 +176,11 @@ python train_agents.py --algo ppo --timesteps 100000 --mode headless
 python train_agents.py --algo ppo --timesteps 10000 --mode visual
 ```
 
+**Retomar desde un checkpoint:**
+```bash
+python train_agents.py --algo ppo --timesteps 50000 --resume-from training_logs/checkpoints
+```
+
 **Algoritmos disponibles:**
 - **PPO**: Proximal Policy Optimization (recomendado)
 - **A2C**: Advantage Actor-Critic
@@ -187,6 +192,7 @@ python train_agents.py --algo ppo --timesteps 10000 --mode visual
 - Early stopping si no hay mejora en 5 evaluaciones
 - Logs de TensorBoard para métricas personalizadas
 - Guardado automático del mejor modelo
+- Retomar entrenamiento desde un checkpoint con `--resume-from`
 
 ### Monitoreo con TensorBoard
 
@@ -302,6 +308,7 @@ for _ in range(1000):
 - [x] Callbacks de evaluación automática cada 5k timesteps
 - [x] Checkpoints automáticos y early stopping
 - [x] Integración completa con TensorBoard para monitoreo
+- [x] Capacidad de reanudar entrenamientos desde checkpoints
 
 ### **Validación y Testing**
 - [x] Environment validation con `stable_baselines3.common.env_checker`
