@@ -42,6 +42,17 @@ class FMSManager:
             Truck(18, 180, self.map.nodes["parking"], efficiency=1.02),
             Truck(19, 180, self.map.nodes["parking"], efficiency=1.03),
             Truck(20, 180, self.map.nodes["parking"], efficiency=1.04),
+            # ✨ NUEVOS: 10 camiones adicionales de 200t
+            Truck(21, 200, self.map.nodes["parking"], efficiency=0.88),
+            Truck(22, 200, self.map.nodes["parking"], efficiency=0.89),
+            Truck(23, 200, self.map.nodes["parking"], efficiency=0.91),
+            Truck(24, 200, self.map.nodes["parking"], efficiency=0.93),
+            Truck(25, 200, self.map.nodes["parking"], efficiency=0.95),
+            Truck(26, 200, self.map.nodes["parking"], efficiency=0.87),
+            Truck(27, 200, self.map.nodes["parking"], efficiency=0.92),
+            Truck(28, 200, self.map.nodes["parking"], efficiency=0.94),
+            Truck(29, 200, self.map.nodes["parking"], efficiency=0.86),
+            Truck(30, 200, self.map.nodes["parking"], efficiency=0.90),
         ]
 
         # Crear palas
