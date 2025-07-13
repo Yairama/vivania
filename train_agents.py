@@ -5,7 +5,6 @@ import gym
 import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
-    EvalCallback,
     CheckpointCallback,
     CallbackList,
     BaseCallback,
@@ -18,7 +17,11 @@ from rl.mining_env import MiningEnv
 
 
 class TensorboardMetricsCallback(BaseCallback):
-    """Log custom environment metrics to TensorBoard."""
+    """Log custom environment metrics and checkpoint info to TensorBoard."""
+
+    def __init__(self, checkpoint_callback: CheckpointCallback | None = None):
+        super().__init__()
+        self.checkpoint_callback = checkpoint_callback
 
     def _on_step(self) -> bool:
         infos = self.locals.get("infos")
@@ -39,24 +42,20 @@ class TensorboardMetricsCallback(BaseCallback):
                 self.logger.record("rollout/waste_in_crusher", float(wrong))
             if hang is not None:
                 self.logger.record("rollout/hang_time", float(hang))
+
+        if self.checkpoint_callback is not None:
+            ckpt_cb = self.checkpoint_callback
+            if ckpt_cb.n_calls % ckpt_cb.save_freq == 0 and ckpt_cb.n_calls > 0:
+                path = os.path.join(
+                    ckpt_cb.save_path,
+                    f"{ckpt_cb.name_prefix}_{ckpt_cb.num_timesteps}_steps.zip",
+                )
+                self.logger.record("checkpoint/path", path)
+                self.logger.record(
+                    "checkpoint/num_timesteps", ckpt_cb.num_timesteps
+                )
         return True
 
-
-class VisualEvalCallback(EvalCallback):
-    """EvalCallback that pauses the training visualizer during evaluation."""
-
-    def __init__(self, train_env: MiningEnv, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.train_env = train_env
-
-    def _on_step(self) -> bool:
-        if hasattr(self.train_env, "pause_visualizer"):
-            self.train_env.pause_visualizer()
-        try:
-            return super()._on_step()
-        finally:
-            if hasattr(self.train_env, "resume_visualizer"):
-                self.train_env.resume_visualizer()
 
 
 def make_env(render_mode: str, max_steps=800) -> gym.Env:
@@ -73,17 +72,6 @@ def train(
     device = "cuda" if torch.cuda.is_available() else "cpu"
     algo_class = PPO
     env = make_env(render_mode=render_mode, max_steps=1000000)
-    # Evaluation environment should be headless to speed up training
-    eval_env = make_env("headless", max_steps=5000)
-
-    eval_callback = VisualEvalCallback(
-        env,
-        eval_env=eval_env,
-        best_model_save_path=os.path.join(logdir, "best"),
-        log_path=logdir,
-        eval_freq=5000,
-        n_eval_episodes=2,
-    )
 
     checkpoint_callback = CheckpointCallback(
         save_freq=10000,
@@ -91,9 +79,9 @@ def train(
         name_prefix="ppo",
     )
 
-    tb_callback = TensorboardMetricsCallback()
+    tb_callback = TensorboardMetricsCallback(checkpoint_callback)
 
-    callbacks = CallbackList([checkpoint_callback, eval_callback, tb_callback])
+    callbacks = CallbackList([checkpoint_callback, tb_callback])
 
     if resume_from is not None:
         # If a directory is passed, load the most recent checkpoint inside
@@ -124,7 +112,6 @@ def train(
     finally:
         model.save(os.path.join(logdir, "ppo_final"))
         env.close()
-        eval_env.close()
 
 
 def main():

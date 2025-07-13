@@ -185,7 +185,6 @@ python train_agents.py --timesteps 50000 --resume-from training_logs/checkpoints
 - **PPO**: Proximal Policy Optimization (recomendado)
 
 **Características del entrenamiento:**
-- Evaluación cada 5,000 timesteps
 - Checkpoints automáticos cada 10,000 timesteps
 - Logs de TensorBoard para métricas personalizadas
 - Guardado automático del mejor modelo
@@ -302,8 +301,7 @@ for _ in range(1000):
 - [x] Action space discreto (9 acciones) con action masking inteligente
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento con PPO
-- [x] Callbacks de evaluación automática cada 5k timesteps
-- [x] Checkpoints automáticos
+ - [x] Checkpoints automáticos
 - [x] Integración completa con TensorBoard para monitoreo
 - [x] Capacidad de reanudar entrenamientos desde checkpoints
 
