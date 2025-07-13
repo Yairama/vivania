@@ -18,7 +18,6 @@ def _resolve_path(path: str) -> str:
             return max(ckpts, key=os.path.getmtime)
     return path
 
-
 def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     """Run evaluation of a saved model for a number of steps."""
     model_path = _resolve_path(model_path)
@@ -26,9 +25,8 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     env = MiningEnv(render_mode=render_mode, max_steps=steps, target_production=40000)
     obs, _ = env.reset()
     stats_path = model_path.replace(".zip", "_stats.npz")
-    if os.path.exists(stats_path):
-        env.load_running_stats_from_file(stats_path)
-        obs = env.get_normalised_observation()
+    env.load_running_stats_from_file(stats_path)
+    obs = env.get_normalised_observation()
 
     for _ in range(steps):
         action, _ = model.predict(obs, deterministic=True)
@@ -56,7 +54,7 @@ def main():
         default="headless",
         help="Evaluation mode",
     )
-    parser.add_argument("--steps", type=int, default=1000, help="Number of steps")
+    parser.add_argument("--steps", type=int, default=10000, help="Number of steps")
     args = parser.parse_args()
 
     evaluate(args.model_path, args.mode, args.steps)
