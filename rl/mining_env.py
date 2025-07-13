@@ -259,6 +259,34 @@ class MiningEnv(gym.Env):
         self._update_action_mask()
         return obs
 
+    # ------------------------------------------------------------------
+    # Running stats utilities
+    # ------------------------------------------------------------------
+    def save_running_stats(self, path: str):
+        """Save running normalisation statistics to a file."""
+        np.savez(
+            path,
+            mean=self.running_stats.mean,
+            var=self.running_stats.var,
+            count=self.running_stats.count,
+        )
+
+    def load_running_stats_from_file(self, path: str):
+        """Load running normalisation statistics from ``path``."""
+        data = np.load(path)
+        self.running_stats.mean = data["mean"]
+        self.running_stats.var = data["var"]
+        self.running_stats.count = data["count"].item() if hasattr(data["count"], "item") else data["count"]
+
+    def get_normalised_observation(self) -> np.ndarray:
+        """Return current observation using existing running stats without updating them."""
+        raw_obs = np.array(
+            self.manager.get_extended_observation_vector(), dtype=np.float32
+        )
+        obs = self.running_stats.normalize(raw_obs)
+        self._update_action_mask()
+        return obs
+
     def _update_action_mask(self):
         mask = np.zeros(9, dtype=np.float32)
         mask[0] = 1.0
