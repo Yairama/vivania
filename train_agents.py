@@ -129,6 +129,10 @@ def train(
         model.learn(total_timesteps=timesteps, callback=callbacks)
     except Exception as e:
         print("Training interrupted. Saving model...", e)
+        model.save(os.path.join(logdir, "ppo_final"))
+        env.save(stats_file)
+        env.close()
+
     finally:
         model.save(os.path.join(logdir, "ppo_final"))
         env.save(stats_file)
