@@ -47,16 +47,19 @@ class MiningEnv(gym.Env):
         if self.render_mode == "visual":
             self._init_pygame()
 
-        # Observation space dimension based on fleet size
-        self.obs_dim = len(self.manager.get_extended_observation_vector())
-        obs_low = np.zeros(self.obs_dim, dtype=np.float32)
-        obs_high = np.ones(self.obs_dim, dtype=np.float32) * np.inf
+        # Optimized observation space following reward.md guidance
+        self.obs_dim = 90
         self.observation_space = gym.spaces.Box(
-            low=obs_low, high=obs_high, dtype=np.float32
+            low=-1.0,
+            high=1.0,
+            shape=(self.obs_dim,),
+            dtype=np.float32,
         )
 
-        # Simplified action space (0=nothing, 1-6=shovels, 7=crusher, 8=dump)
-        self.action_space = gym.spaces.Discrete(9)
+        # Hybrid discrete action space: [truck_index, command]
+        self.action_space = gym.spaces.MultiDiscrete(
+            [len(self.manager.trucks), 9]
+        )
         self.last_processed = 0.0
         self.last_dumped = 0.0
         self.last_mineral_lost = 0.0
@@ -98,10 +101,11 @@ class MiningEnv(gym.Env):
         # Recreate manager to reset state
         self.manager = FMSManager()
         # Recompute observation space in case fleet size changed
-        self.obs_dim = len(self.manager.get_extended_observation_vector())
+        self.obs_dim = 90
         self.observation_space = gym.spaces.Box(
-            low=np.zeros(self.obs_dim, dtype=np.float32),
-            high=np.ones(self.obs_dim, dtype=np.float32) * np.inf,
+            low=-1.0,
+            high=1.0,
+            shape=(self.obs_dim,),
             dtype=np.float32,
         )
         self.step_count = 0
@@ -117,20 +121,21 @@ class MiningEnv(gym.Env):
         info = {}
         return obs, info
 
-    def step(self, action: int):
-        if action == 0:
+    def step(self, action: np.ndarray):
+        truck_idx, cmd = int(action[0]), int(action[1])
+        if cmd == 0:
             pass
-        elif 1 <= action <= 6:
-            truck = self.manager.get_available_truck(loaded=False)
-            if truck:
-                self.manager.dispatch_shovel(truck.id, action)
-        elif action == 7:
-            truck = self.manager.get_available_truck(loaded=True)
-            if truck:
+        elif 1 <= cmd <= 6:
+            truck = self.manager.trucks[truck_idx]
+            if truck.is_available() and not truck.loading:
+                self.manager.dispatch_shovel(truck.id, cmd)
+        elif cmd == 7:
+            truck = self.manager.trucks[truck_idx]
+            if truck.is_available() and truck.loading:
                 self.manager.dispatch_dump(truck.id, True)
-        elif action == 8:
-            truck = self.manager.get_available_truck(loaded=True)
-            if truck:
+        elif cmd == 8:
+            truck = self.manager.trucks[truck_idx]
+            if truck.is_available() and truck.loading:
                 self.manager.dispatch_dump(truck.id, False)
         self.manager.update()
         if self.visualizer and not self._visual_paused:
@@ -219,7 +224,8 @@ class MiningEnv(gym.Env):
 
     def _get_observation(self) -> np.ndarray:
         raw_obs = np.array(
-            self.manager.get_extended_observation_vector(), dtype=np.float32
+            self.manager.get_optimized_observation_vector(self.obs_dim),
+            dtype=np.float32,
         )
         return raw_obs
 
