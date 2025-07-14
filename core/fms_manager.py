@@ -320,3 +320,23 @@ class FMSManager:
         obs.append(moving_trucks)
 
         return obs
+
+    def get_optimized_observation_vector(self, dim: int = 90) -> List[float]:
+        """Return a normalized observation vector following reward.md guidance.
+
+        This method trims the extended observation to the desired dimensionality
+        and normalizes all values into the [-1, 1] range using a simple tanh
+        scaling. It does not attempt sophisticated dimensionality reduction but
+        serves as a lightweight implementation of the proposed observation space
+        restructuring.
+
+        Parameters
+        ----------
+        dim : int, optional
+            Target dimension of the observation vector. Defaults to 90.
+        """
+        full_obs = np.array(self.get_extended_observation_vector(), dtype=np.float32)
+        if dim < len(full_obs):
+            full_obs = full_obs[:dim]
+        scaled = np.tanh(full_obs / 100.0)
+        return scaled.tolist()
