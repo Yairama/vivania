@@ -284,6 +284,9 @@ class FMSManager:
         # Global state
         obs.append(self.tick_count)
         obs.append(self.crusher.total_processed)
+        # Track material incorrectly routed to provide better feedback for RL
+        obs.append(self.crusher.total_waste_dumped)
+        obs.append(self.dump.total_mineral_dumped)
         available = len([t for t in self.trucks if t.is_available()])
         obs.append(available)
 
