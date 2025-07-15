@@ -321,22 +321,36 @@ class FMSManager:
 
         return obs
 
-    def get_optimized_observation_vector(self, dim: int = 90) -> List[float]:
+    def get_optimized_observation_vector(self, dim: int = 85) -> List[float]:
         """Return a normalized observation vector following reward.md guidance.
 
-        This method trims the extended observation to the desired dimensionality
-        and normalizes all values into the [-1, 1] range using a simple tanh
-        scaling. It does not attempt sophisticated dimensionality reduction but
-        serves as a lightweight implementation of the proposed observation space
-        restructuring.
+        The observation is organized using a simple hierarchical layout
+        (local/global/communication/temporal) and trimmed to the desired
+        dimensionality. Values are normalized to the [-1, 1] range using a
+        ``tanh`` scaling as suggested in ``docs/reward.md``.
 
         Parameters
         ----------
         dim : int, optional
-            Target dimension of the observation vector. Defaults to 90.
+            Target dimension of the observation vector. Defaults to 85.
         """
         full_obs = np.array(self.get_extended_observation_vector(), dtype=np.float32)
-        if dim < len(full_obs):
-            full_obs = full_obs[:dim]
-        scaled = np.tanh(full_obs / 100.0)
+
+        # Basic hierarchical split: 40 local, 25 global, 15 communication,
+        # 20 temporal. If the array is shorter than expected we simply pad
+        # with zeros before trimming.
+        if len(full_obs) < 100:
+            full_obs = np.pad(full_obs, (0, 100 - len(full_obs)))
+
+        local = full_obs[:40]
+        global_part = full_obs[40:65]
+        communication = full_obs[65:80]
+        temporal = full_obs[80:100]
+
+        obs = np.concatenate([local, global_part, communication, temporal])
+
+        if dim < len(obs):
+            obs = obs[:dim]
+
+        scaled = np.tanh(obs / 100.0)
         return scaled.tolist()

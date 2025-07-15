@@ -146,18 +146,19 @@ mining_simulation/
 
 ### Environment: `MiningEnv`
 
-**Observation Space** (124 dimensiones normalizadas):
-- Estado global: tick, producción total, camiones disponibles
-- Colas y estado de crusher, dump y palas
-- Estado detallado de cada camión (task, carga, eficiencia, distancias)
-- Agregados espaciales: distancias promedio y utilización de flota
+**Observation Space** (85 dimensiones normalizadas):
+ - Estructura jerárquica local/global/comunicación/temporal
+ - Estado global: tick, producción total, camiones disponibles
+ - Colas y estado de crusher, dump y palas
+ - Estado detallado de cada camión (task, carga, eficiencia, distancias)
+ - Agregados espaciales: distancias promedio y utilización de flota
 
 **Action Space**:
-- 9 acciones discretas
-- 0: No-op
-- 1-6: Enviar camión vacío a cada pala
-- 7: Enviar camión cargado al crusher
-- 8: Enviar camión cargado al dump
+- Espacio multidiscreto `[id_camión, comando]`
+- Comando 0: No-op
+- Comandos 1-6: Enviar camión vacío a cada pala
+- Comando 7: Enviar camión cargado al crusher
+- Comando 8: Enviar camión cargado al dump
 
 **Reward Function**:
 ```python
@@ -283,9 +284,9 @@ python eval.py --from training_logs/best/best_model.zip --mode visual --steps 10
 - [x] Panel de estadísticas detallado con métricas de performance
 - [x] Leyenda completa y controles interactivos
 
-### **Sistema de Reinforcement Learning**
-- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space de 124 dimensiones
-- [x] Action space discreto (9 acciones)
+-### **Sistema de Reinforcement Learning**
+- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space optimizado de 85 dimensiones
+- [x] Action space multidiscreto `[id_camión, comando]`
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento con PPO
  - [x] Checkpoints automáticos
