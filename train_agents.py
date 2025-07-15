@@ -12,9 +12,10 @@ from stable_baselines3.common.callbacks import (
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
+import logging
 from rl.mining_env import MiningEnv
 
-
+logger = logging.getLogger(__name__)
 
 
 class TensorboardMetricsCallback(BaseCallback):
@@ -61,7 +62,7 @@ class TensorboardMetricsCallback(BaseCallback):
                     "checkpoint/num_timesteps", ckpt_cb.num_timesteps
                 )
                 if self.stats_path is not None:
-                    self.training_env.save(self.stats_path)
+                    self.training_env.save(ckpt_cb.save_path+self.stats_path)
         return True
 
 
@@ -113,7 +114,12 @@ def train(
             ]
             if ckpts:
                 resume_from = max(ckpts, key=os.path.getmtime)
+                vec_normalize_path = os.path.join(os.path.dirname(resume_from), "vecnormalize.pkl")
+                logger.info(f"Resuming from checkpoint {resume_from}")
+                logger.info(f"Loading vecnormalize from {vec_normalize_path}")
+                
         model = algo_class.load(resume_from, env=env, device=device)
+        env = VecNormalize.load(vec_normalize_path, env)
     else:
         model = algo_class(
             "MlpPolicy",
