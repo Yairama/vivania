@@ -29,8 +29,9 @@ reward = (delta_waste + 2 * delta_mineral)
          - 0.5 * delta_hang_time
          - 2.0 * delta_mineral_lost
          - 1.0 * delta_waste_in_crusher
+         - 1.0 * wrong_assignments
 ```
-This favours mineral production, keeps the fleet working and penalises idle shovels or incorrect dumping of material.
+This favours mineral production, keeps the fleet working and penalises idle shovels, incorrect dumping of material or trucks heading to the wrong destination.
 
 ## Episode Termination
 Episodes end when either a production target or a step limit is reached. By default the environment terminates after accumulating **400t** of total throughput or **800** steps, whichever happens first. These values can be customised via the `max_steps` and `target_production` parameters when creating the environment.
