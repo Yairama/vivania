@@ -216,11 +216,13 @@ class MiningEnv(gym.Env):
             + len(self.manager.dump.queue)
             + sum(len(s.queue) for s in self.manager.shovels)
         )
+        wrong_dump_penalty = self.manager.count_wrong_dump_assignments()
         penalty = 0.1 * queue_penalty
         penalty += 0.5 * delta_hang
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
-        penalty += 5.0 * self.manager.count_wrong_dump_assignments()
+        penalty += 500.0 * wrong_dump_penalty * wrong_dump_penalty
+        
         return production + working - penalty
 
     def _get_observation(self) -> np.ndarray:
