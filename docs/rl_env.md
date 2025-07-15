@@ -3,7 +3,7 @@
 `MiningEnv` is a Gymnasium-compatible environment wrapping the `FMSManager` simulation.
 
 ## Observation Space
-The observation vector has 54 continuous values:
+The observation vector has 115 continuous values:
 - Global status: tick, total production and number of available trucks
 - Fixed equipment: queue length and busy flag for crusher, dump and each shovel
 - Truck state: task id, load ratio, efficiency and distances for each truck

@@ -273,6 +273,10 @@ class FMSManager:
         }
         return mapping.get(task, 0)
 
+    def _encode_material_type(self, material_type: str) -> float:
+        mapping = {None: 0.0, 'mineral': 1.0, 'waste': -1.0}
+        return mapping.get(material_type, 0.0)
+
     def get_extended_observation_vector(self) -> List[float]:
         obs: List[float] = []
 
@@ -296,6 +300,7 @@ class FMSManager:
             obs.append(self._encode_task(t.task))
             obs.append(t.current_load / t.capacity)
             obs.append(t.efficiency)
+            obs.append(self._encode_material_type(t.material_type))
             obs.append(self.get_distance_between(t.position.name, 'crusher'))
             obs.append(self.get_distance_between(t.position.name, 'dump_zone'))
 
@@ -321,36 +326,19 @@ class FMSManager:
 
         return obs
 
-    def get_optimized_observation_vector(self, dim: int = 85) -> List[float]:
-        """Return a normalized observation vector following reward.md guidance.
-
-        The observation is organized using a simple hierarchical layout
-        (local/global/communication/temporal) and trimmed to the desired
-        dimensionality. Values are normalized to the [-1, 1] range using a
-        ``tanh`` scaling as suggested in ``docs/reward.md``.
+    def get_optimized_observation_vector(self, dim: int = 115) -> List[float]:
+        """Return a normalized observation vector trimmed to ``dim`` elements.
 
         Parameters
         ----------
         dim : int, optional
-            Target dimension of the observation vector. Defaults to 85.
+            Target dimension of the observation vector. Defaults to 115.
         """
         full_obs = np.array(self.get_extended_observation_vector(), dtype=np.float32)
 
-        # Basic hierarchical split: 40 local, 25 global, 15 communication,
-        # 20 temporal. If the array is shorter than expected we simply pad
-        # with zeros before trimming.
-        if len(full_obs) < 100:
-            full_obs = np.pad(full_obs, (0, 100 - len(full_obs)))
+        if len(full_obs) < dim:
+            full_obs = np.pad(full_obs, (0, dim - len(full_obs)))
 
-        local = full_obs[:40]
-        global_part = full_obs[40:65]
-        communication = full_obs[65:80]
-        temporal = full_obs[80:100]
-
-        obs = np.concatenate([local, global_part, communication, temporal])
-
-        if dim < len(obs):
-            obs = obs[:dim]
-
+        obs = full_obs[:dim]
         scaled = np.tanh(obs / 100.0)
         return scaled.tolist()
