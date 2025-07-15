@@ -50,8 +50,8 @@ class MiningEnv(gym.Env):
         # Optimized observation space with material type info
         self.obs_dim = 115
         self.observation_space = gym.spaces.Box(
-            low=-1.0,
-            high=1.0,
+            low=-np.inf,
+            high=np.inf,
             shape=(self.obs_dim,),
             dtype=np.float32,
         )
@@ -103,8 +103,8 @@ class MiningEnv(gym.Env):
         # Recompute observation space in case fleet size changed
         self.obs_dim = 115
         self.observation_space = gym.spaces.Box(
-            low=-1.0,
-            high=1.0,
+            low=-np.inf,
+            high=np.inf,
             shape=(self.obs_dim,),
             dtype=np.float32,
         )
