@@ -69,10 +69,6 @@ class Shovel:
                     self.timer = self.load_time
                 
     def request_load(self, truck):
-        if truck not in self.queue and truck.task == "waiting_shovel":
-            self.queue.append(truck)
-            
-    def can_accept_truck(self):
-        """Verifica si la pala puede aceptar más camiones"""
-        return len(self.queue) < 3  # Máximo 3 camiones en cola
+        """Encola el camión sin restricciones."""
+        self.queue.append(truck)
 
