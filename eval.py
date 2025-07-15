@@ -40,7 +40,7 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     obs = env.reset()
 
     for _ in range(steps):
-        action, _ = model.predict(obs, deterministic=False)
+        action, _ = model.predict(obs, deterministic=True)
         obs, _, dones, infos = env.step(action)
         if dones[0]:
             obs = env.reset()

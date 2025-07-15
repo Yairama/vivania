@@ -6,5 +6,5 @@ run:
 continue:
     python.exe .\train_agents.py --timesteps 1000000 --resume-from .\training_logs\checkpoints
     
-evaluate:
-    python.exe .\eval.py --model-path .\training_logs\ppo_final.zip --render-mode visual --steps 10000
+eval:
+    python.exe .\eval.py --from .\training_logs\checkpoints\ppo_120000_steps.zip --mode visual --steps 10000
