@@ -26,6 +26,10 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     model = PPO.load(model_path)
 
     stats_path = os.path.join(os.path.dirname(model_path), "vecnormalize.pkl")
+    if not os.path.exists(stats_path):
+        alt = os.path.join(os.path.dirname(model_path), "checkpoints", "vecnormalize.pkl")
+        if os.path.exists(alt):
+            stats_path = alt
 
     def _init():
         return Monitor(MiningEnv(render_mode=render_mode, max_steps=steps, target_production=40000))

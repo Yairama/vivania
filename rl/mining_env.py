@@ -47,9 +47,8 @@ class MiningEnv(gym.Env):
         if self.render_mode == "visual":
             self._init_pygame()
 
-        # Optimized observation space following reward.md guidance
-        # Hierarchical design trimmed to 85 dimensions
-        self.obs_dim = 85
+        # Optimized observation space with material type info
+        self.obs_dim = 115
         self.observation_space = gym.spaces.Box(
             low=-1.0,
             high=1.0,
@@ -102,7 +101,7 @@ class MiningEnv(gym.Env):
         # Recreate manager to reset state
         self.manager = FMSManager()
         # Recompute observation space in case fleet size changed
-        self.obs_dim = 85
+        self.obs_dim = 115
         self.observation_space = gym.spaces.Box(
             low=-1.0,
             high=1.0,

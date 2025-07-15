@@ -114,12 +114,17 @@ def train(
             ]
             if ckpts:
                 resume_from = max(ckpts, key=os.path.getmtime)
-                vec_normalize_path = os.path.join(os.path.dirname(resume_from), "vecnormalize.pkl")
-                logger.info(f"Resuming from checkpoint {resume_from}")
-                logger.info(f"Loading vecnormalize from {vec_normalize_path}")
-                
+        vec_normalize_path = os.path.join(os.path.dirname(resume_from), "vecnormalize.pkl")
+        if not os.path.exists(vec_normalize_path):
+            alt = os.path.join(os.path.dirname(resume_from), "checkpoints", "vecnormalize.pkl")
+            if os.path.exists(alt):
+                vec_normalize_path = alt
+        logger.info(f"Resuming from checkpoint {resume_from}")
+        logger.info(f"Loading vecnormalize from {vec_normalize_path}")
+
         model = algo_class.load(resume_from, env=env, device=device)
-        env = VecNormalize.load(vec_normalize_path, env)
+        if os.path.exists(vec_normalize_path):
+            env = VecNormalize.load(vec_normalize_path, env)
     else:
         model = algo_class(
             "MlpPolicy",
