@@ -35,28 +35,21 @@ class Simulation:
     # Decision logic (heuristics)
     # ------------------------------------------------------------------
     def _select_dump_destination(self, truck):
-        destination = None
+        """Selecciona destino de descarga sin considerar capacidad."""
         if truck.material_type == 'mineral':
-            if self.crusher.can_accept_truck():
-                destination = 'crusher'
-            elif self.dump.can_accept_truck():
-                destination = 'dump_zone'
-        else:
-            if self.dump.can_accept_truck():
-                destination = 'dump_zone'
-        return destination
+            return 'crusher'
+        return 'dump_zone'
 
     def _find_best_shovel(self):
-        available = [s for s in self.shovels if s.can_accept_truck()]
-        if not available:
+        if not self.shovels:
             return None
 
-        mineral = [s for s in available if s.material_type == 'mineral']
-        waste = [s for s in available if s.material_type == 'waste']
+        mineral = [s for s in self.shovels if s.material_type == 'mineral']
+        waste = [s for s in self.shovels if s.material_type == 'waste']
 
         if mineral and (not waste or self.crusher.total_processed < self.dump.total_dumped):
             return min(mineral, key=lambda s: len(s.queue))
-        return min(available, key=lambda s: len(s.queue))
+        return min(self.shovels, key=lambda s: len(s.queue))
 
     def get_statistics(self):
         return self.manager.get_statistics()

@@ -29,10 +29,6 @@ class Dump:
                 self.current_truck = None
                 
     def request_dump(self, truck):
-        if truck not in self.queue and truck.task == "waiting_dump":
-            self.queue.append(truck)
-            
-    def can_accept_truck(self):
-        """Verifica si el dump puede aceptar más camiones"""
-        return len(self.queue) < 2
+        """Encola el camión para descarga sin restricciones."""
+        self.queue.append(truck)
 
