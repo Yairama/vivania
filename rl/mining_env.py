@@ -220,6 +220,7 @@ class MiningEnv(gym.Env):
         penalty += 0.5 * delta_hang
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
+        penalty += 1.0 * self.manager.count_wrong_dump_assignments()
         return production + working - penalty
 
     def _get_observation(self) -> np.ndarray:

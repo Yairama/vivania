@@ -345,3 +345,17 @@ class FMSManager:
 
         obs = full_obs[:dim]
         return obs.tolist()
+
+    def count_wrong_dump_assignments(self) -> int:
+        """Count trucks currently heading to the wrong dump destination."""
+        count = 0
+        for t in self.trucks:
+            if t.task == 'moving_to_dump' and t.route:
+                destination = t.route[-1]
+                if (
+                    t.material_type == 'mineral' and destination == 'dump_zone'
+                ) or (
+                    t.material_type == 'waste' and destination == 'crusher'
+                ):
+                    count += 1
+        return count
