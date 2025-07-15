@@ -1,3 +1,4 @@
+from numpy._typing._array_like import NDArray
 from core.mine_map import MineMap
 from core.truck import Truck
 from core.shovel import Shovel
@@ -340,5 +341,4 @@ class FMSManager:
             full_obs = np.pad(full_obs, (0, dim - len(full_obs)))
 
         obs = full_obs[:dim]
-        scaled = np.tanh(obs / 100.0)
-        return scaled.tolist()
+        return obs.tolist()
