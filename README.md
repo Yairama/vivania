@@ -146,12 +146,12 @@ mining_simulation/
 
 ### Environment: `MiningEnv`
 
-**Observation Space** (115 dimensiones normalizadas):
+**Observation Space** (116 dimensiones normalizadas):
  - Estructura jerárquica local/global/comunicación/temporal
  - Estado global: tick, producción total, camiones disponibles
  - Colas y estado de crusher, dump y palas
- - Estado detallado de cada camión (task, carga, eficiencia, distancias)
- - Agregados espaciales: distancias promedio y utilización de flota
+- Estado detallado de cada camión (task, carga, eficiencia, distancias)
+- Agregados espaciales: distancias promedio, utilización de flota y penalización por rutas erróneas
 
 **Action Space**:
 - Espacio multidiscreto `[id_camión, comando]`
@@ -285,7 +285,7 @@ python eval.py --from training_logs/best/best_model.zip --mode visual --steps 10
 - [x] Leyenda completa y controles interactivos
 
 -### **Sistema de Reinforcement Learning**
-- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space optimizado de 115 dimensiones
+- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space optimizado de 116 dimensiones
 - [x] Action space multidiscreto `[id_camión, comando]`
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento con PPO
