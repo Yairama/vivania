@@ -3,12 +3,12 @@
 `MiningEnv` is a Gymnasium-compatible environment wrapping the `FMSManager` simulation.
 
 ## Observation Space
-The observation vector has 115 continuous values:
+The observation vector has 116 continuous values:
 - Global status: tick, total production and number of available trucks
 - Misdirected material: waste dumped at the crusher and mineral lost at the dump
 - Fixed equipment: queue length and busy flag for crusher, dump and each shovel
 - Truck state: task id, load ratio, efficiency and distances for each truck
-- Spatial aggregates: average distances and fleet utilisation statistics
+- Spatial aggregates: average distances, fleet utilisation statistics and wrong dump penalty
 
 Observations are normalised automatically using `VecNormalize` during training and evaluation.
 
