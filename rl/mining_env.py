@@ -240,8 +240,8 @@ class MiningEnv(gym.Env):
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
 
-        penalty += 200.0 * wrong_dump_penalty
-        print(f"Production: {production}, Penalty: {penalty}")
+        # penalty += 200.0 * wrong_dump_penalty
+        # print(f"Production: {production}, Penalty: {penalty}")
 
         return production - penalty #+ working
 
