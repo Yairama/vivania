@@ -15,7 +15,7 @@ class EnvTest(unittest.TestCase):
         env.close()
 
     def test_env_terminates(self):
-        env = MiningEnv(max_steps=5, target_production=10)
+        env = MiningEnv(max_steps=5)
         env.reset()
         done = False
         for _ in range(10):

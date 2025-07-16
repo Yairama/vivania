@@ -69,7 +69,7 @@ class TensorboardMetricsCallback(BaseCallback):
 
 def make_env(render_mode: str, max_steps=800, training=True, stats_path: str | None = None):
     def _init():
-        env = MiningEnv(render_mode=render_mode, max_steps=max_steps, target_production=40000)
+        env = MiningEnv(render_mode=render_mode, max_steps=max_steps)
         return Monitor(env)
 
     env = DummyVecEnv([_init])

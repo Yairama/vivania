@@ -32,8 +32,8 @@ class MiningEnv(gym.Env):
     def __init__(
         self,
         render_mode: str = "headless",
-        max_steps: int = 800,
-        target_production: float = 400.0,
+        max_steps: int = 1000000,
+        target_production: float = 8000.0,
     ):
         super().__init__()
         self.render_mode = render_mode
@@ -222,7 +222,7 @@ class MiningEnv(gym.Env):
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
         penalty += 500.0 * wrong_dump_penalty * wrong_dump_penalty
-        
+
         return production + working - penalty
 
     def _get_observation(self) -> np.ndarray:
