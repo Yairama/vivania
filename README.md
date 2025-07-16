@@ -202,6 +202,11 @@ Métricas disponibles:
 - `rollout/utilization`: Utilización de la flota
 - `rollout/ep_rew_mean`: Recompensa promedio por episodio
 - `rollout/ep_len_mean`: Duración promedio de episodios
+- `rollout/mineral_crusher`: Mineral descargado en chancadora
+- `rollout/mineral_dump`: Mineral descargado en botadero
+- `rollout/waste_in_crusher`: Desmonte descargado en chancadora
+- `rollout/waste_dump`: Desmonte descargado en botadero
+- `rollout/wrong_assignments`: Camiones asignados incorrectamente
 
 ## 📊 Configuración del Sistema
 

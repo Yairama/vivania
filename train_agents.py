@@ -39,6 +39,11 @@ class TensorboardMetricsCallback(BaseCallback):
             lost = info.get("lost_mineral")
             wrong = info.get("waste_in_crusher")
             hang = info.get("hang_time")
+            # New detailed metrics
+            mineral_crusher = info.get("mineral_in_crusher")
+            mineral_dump = info.get("mineral_in_dump")
+            waste_dump = info.get("waste_in_dump")
+            wrong_assign = info.get("wrong_assignments")
             if throughput is not None:
                 self.logger.record("rollout/throughput", float(throughput))
             if util is not None:
@@ -49,6 +54,14 @@ class TensorboardMetricsCallback(BaseCallback):
                 self.logger.record("rollout/waste_in_crusher", float(wrong))
             if hang is not None:
                 self.logger.record("rollout/hang_time", float(hang))
+            if mineral_crusher is not None:
+                self.logger.record("rollout/mineral_crusher", float(mineral_crusher))
+            if mineral_dump is not None:
+                self.logger.record("rollout/mineral_dump", float(mineral_dump))
+            if waste_dump is not None:
+                self.logger.record("rollout/waste_dump", float(waste_dump))
+            if wrong_assign is not None:
+                self.logger.record("rollout/wrong_assignments", float(wrong_assign))
 
         if self.checkpoint_callback is not None:
             ckpt_cb = self.checkpoint_callback
