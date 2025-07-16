@@ -49,7 +49,7 @@ class MiningEnv(gym.Env):
 
         # Optimized observation space with material type info
         # One extra dimension for the wrong dump penalty
-        self.obs_dim = 116
+        self.obs_dim = 113
         self.observation_space = gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -103,7 +103,7 @@ class MiningEnv(gym.Env):
         self.manager = FMSManager()
         # Recompute observation space in case fleet size changed
         # One extra dimension for the wrong dump penalty
-        self.obs_dim = 116
+        self.obs_dim = 113
         self.observation_space = gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -224,20 +224,22 @@ class MiningEnv(gym.Env):
             + sum(len(s.queue) for s in self.manager.shovels)
         )
         wrong_dump_penalty = self.manager.count_wrong_dump_assignments()
-        penalty = 0.1 * queue_penalty
-        penalty += 0.5 * delta_hang
+        penalty = 0.0
+        # penalty = 0.1 * queue_penalty
+        # penalty += 0.5 * delta_hang
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
-        penalty += 500.0 * wrong_dump_penalty * wrong_dump_penalty
 
-        return production + working - penalty
+        penalty += 200.0 * wrong_dump_penalty
+        print(f"Production: {production}, Penalty: {penalty}")
+
+        return production - penalty #+ working
 
     def _get_observation(self) -> np.ndarray:
-        wrong_dump_penalty = float(self.manager.count_wrong_dump_assignments())
+
         raw_obs = np.array(
             self.manager.get_optimized_observation_vector(self.obs_dim - 1),
             dtype=np.float32,
         )
-        obs = np.concatenate([raw_obs, [wrong_dump_penalty]]).astype(np.float32)
-        return obs
+        return raw_obs
 

@@ -3,6 +3,9 @@ set shell := ["pwsh.exe", "-c"]
 run:
     python.exe .\train_agents.py --timesteps 1000000
 
+runv:
+    python.exe .\train_agents.py --timesteps 1000000 --mode visual
+
 continue:
     python.exe .\train_agents.py --timesteps 1000000 --resume-from .\training_logs\checkpoints
     

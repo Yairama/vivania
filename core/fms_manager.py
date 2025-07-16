@@ -302,24 +302,24 @@ class FMSManager:
         # Truck states
         for t in self.trucks:
             obs.append(self._encode_task(t.task))
-            obs.append(t.current_load / t.capacity)
-            obs.append(t.efficiency)
+            # obs.append(t.current_load / t.capacity)
+            # obs.append(t.efficiency)
             obs.append(self._encode_material_type(t.material_type))
-            obs.append(self.get_distance_between(t.position.name, 'crusher'))
-            obs.append(self.get_distance_between(t.position.name, 'dump_zone'))
+            # obs.append(self.get_distance_between(t.position.name, 'crusher'))
+            # obs.append(self.get_distance_between(t.position.name, 'dump_zone'))
 
         # Spatial aggregates and fleet utilisation
-        avg_shovel_dist = np.mean([
-            self.get_distance_between(t.position.name, self._nearest_shovel_name(t.position.name))
-            for t in self.trucks
-        ])
-        avg_crusher_dist = np.mean([
-            self.get_distance_between(t.position.name, 'crusher') for t in self.trucks
-        ])
-        avg_dump_dist = np.mean([
-            self.get_distance_between(t.position.name, 'dump_zone') for t in self.trucks
-        ])
-        obs.extend([avg_shovel_dist, avg_crusher_dist, avg_dump_dist])
+        # avg_shovel_dist = np.mean([
+        #     self.get_distance_between(t.position.name, self._nearest_shovel_name(t.position.name))
+        #     for t in self.trucks
+        # ])
+        # avg_crusher_dist = np.mean([
+        #     self.get_distance_between(t.position.name, 'crusher') for t in self.trucks
+        # ])
+        # avg_dump_dist = np.mean([
+        #     self.get_distance_between(t.position.name, 'dump_zone') for t in self.trucks
+        # ])
+        # obs.extend([avg_shovel_dist, avg_crusher_dist, avg_dump_dist])
 
         loading_trucks = len([
             t for t in self.trucks if t.task in ['loading', 'waiting_dump', 'dumping', 'moving_to_dump']
@@ -327,10 +327,11 @@ class FMSManager:
         moving_trucks = len([t for t in self.trucks if t.is_moving()])
         obs.append(loading_trucks)
         obs.append(moving_trucks)
+        obs.append(self.count_wrong_dump_assignments())
 
         return obs
 
-    def get_optimized_observation_vector(self, dim: int = 115) -> List[float]:
+    def get_optimized_observation_vector(self, dim: int = 113) -> List[float]:
         """Return a normalized observation vector trimmed to ``dim`` elements.
 
         Parameters
