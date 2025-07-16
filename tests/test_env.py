@@ -11,7 +11,10 @@ class EnvTest(unittest.TestCase):
         env = MiningEnv()
         check_env(env, warn=True)
         obs, info = env.reset()
-        self.assertEqual(obs.shape[0], env.observation_space.shape[0])
+        self.assertIsInstance(obs, dict)
+        for key, space in env.observation_space.spaces.items():
+            self.assertIn(key, obs)
+            self.assertEqual(obs[key].shape, space.shape)
         env.close()
 
     def test_env_terminates(self):

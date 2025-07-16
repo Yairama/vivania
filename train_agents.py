@@ -1,7 +1,7 @@
 import argparse
 import os
 
-import gym
+import gymnasium as gym
 import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
@@ -139,8 +139,13 @@ def train(
         if os.path.exists(vec_normalize_path):
             env = VecNormalize.load(vec_normalize_path, env)
     else:
+        policy = (
+            "MultiInputPolicy"
+            if isinstance(env.observation_space, gym.spaces.Dict)
+            else "MlpPolicy"
+        )
         model = algo_class(
-            "MlpPolicy",
+            policy,
             env,
             verbose=1,
             tensorboard_log=os.path.join(logdir, "tb"),

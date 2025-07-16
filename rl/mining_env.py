@@ -47,15 +47,8 @@ class MiningEnv(gym.Env):
         if self.render_mode == "visual":
             self._init_pygame()
 
-        # Optimized observation space with material type info
-        # One extra dimension for the wrong dump penalty
-        self.obs_dim = 113
-        self.observation_space = gym.spaces.Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=(self.obs_dim,),
-            dtype=np.float32,
-        )
+        # Structured observation space
+        self._setup_observation_space()
 
         # Hybrid discrete action space: [truck_index, command]
         self.action_space = gym.spaces.MultiDiscrete(
@@ -66,6 +59,30 @@ class MiningEnv(gym.Env):
         self.last_mineral_lost = 0.0
         self.last_waste_wrong = 0.0
         self.last_hang_time = 0.0
+
+    def _setup_observation_space(self):
+        """Create a structured observation space using :class:`gym.spaces.Dict`."""
+        n_shovels = len(self.manager.shovels)
+        n_trucks = len(self.manager.trucks)
+
+        self.observation_space = gym.spaces.Dict(
+            {
+                "global": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32),
+                "equipment": gym.spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(4 + 2 * n_shovels,),
+                    dtype=np.float32,
+                ),
+                "trucks": gym.spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(2 * n_trucks,),
+                    dtype=np.float32,
+                ),
+                "aggregates": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+            }
+        )
 
     def _init_pygame(self):
         """Initialize pygame and the visualizer."""
@@ -102,14 +119,7 @@ class MiningEnv(gym.Env):
         # Recreate manager to reset state
         self.manager = FMSManager()
         # Recompute observation space in case fleet size changed
-        # One extra dimension for the wrong dump penalty
-        self.obs_dim = 113
-        self.observation_space = gym.spaces.Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=(self.obs_dim,),
-            dtype=np.float32,
-        )
+        self._setup_observation_space()
         self.step_count = 0
         if self.visualizer:
             # Reuse existing visualizer instance with new manager
@@ -235,11 +245,30 @@ class MiningEnv(gym.Env):
 
         return production - penalty #+ working
 
-    def _get_observation(self) -> np.ndarray:
+    def _get_observation(self) -> Dict[str, np.ndarray]:
+        """Return a structured observation matching :attr:`observation_space`."""
 
-        raw_obs = np.array(
-            self.manager.get_optimized_observation_vector(self.obs_dim - 1),
-            dtype=np.float32,
-        )
-        return raw_obs
+        raw = self.manager.get_extended_observation_vector()
+
+        idx = 0
+        global_len = 5
+        global_obs = np.array(raw[idx : idx + global_len], dtype=np.float32)
+        idx += global_len
+
+        equipment_len = 4 + 2 * len(self.manager.shovels)
+        equipment_obs = np.array(raw[idx : idx + equipment_len], dtype=np.float32)
+        idx += equipment_len
+
+        trucks_len = 2 * len(self.manager.trucks)
+        trucks_obs = np.array(raw[idx : idx + trucks_len], dtype=np.float32)
+        idx += trucks_len
+
+        aggregates_obs = np.array(raw[idx : idx + 3], dtype=np.float32)
+
+        return {
+            "global": global_obs,
+            "equipment": equipment_obs,
+            "trucks": trucks_obs,
+            "aggregates": aggregates_obs,
+        }
 
