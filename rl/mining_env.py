@@ -168,6 +168,11 @@ class MiningEnv(gym.Env):
             "lost_mineral": self.manager.dump.total_mineral_dumped,
             "waste_in_crusher": self.manager.crusher.total_waste_dumped,
             "hang_time": sum(s.hang_time for s in self.manager.shovels),
+            # Additional metrics for detailed monitoring
+            "mineral_in_crusher": self.manager.crusher.total_processed,
+            "mineral_in_dump": self.manager.dump.total_mineral_dumped,
+            "waste_in_dump": self.manager.dump.total_dumped,
+            "wrong_assignments": self.manager.count_wrong_dump_assignments(),
         }
         return obs, reward, terminated, truncated, info
 
