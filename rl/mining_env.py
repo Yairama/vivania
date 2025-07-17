@@ -242,7 +242,6 @@ class MiningEnv(gym.Env):
 
         # penalty += 200.0 * wrong_dump_penalty
         # print(f"Production: {production}, Penalty: {penalty}")
-        print(f"working: {working}")
         return production - penalty - working
 
     def _get_observation(self) -> Dict[str, np.ndarray]:
