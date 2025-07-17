@@ -236,7 +236,7 @@ class MiningEnv(gym.Env):
         wrong_dump_penalty = self.manager.count_wrong_dump_assignments()
         penalty = 0.0
         penalty = 0.1 * queue_penalty
-        penalty += 0.5 * delta_hang
+        # penalty += 0.5 * delta_hang
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
 
