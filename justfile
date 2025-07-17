@@ -13,4 +13,4 @@ continuev:
     python.exe .\train_agents.py --timesteps 1000000 --resume-from .\training_logs\checkpoints --mode visual
 
 eval:
-    python.exe .\eval.py --from .\training_logs\checkpoints\ppo_2400000_steps.zip --mode visual --steps 10000
+    python.exe .\eval.py --from .\training_logs\checkpoints\ppo_100000_steps.zip --mode visual --steps 10000

@@ -39,9 +39,8 @@ def evaluate(model_path: str, render_mode: str = "headless", steps: int = 1000):
     obs = reset_result[0] if isinstance(reset_result, tuple) else reset_result
     for i in range(steps):
         action, _states = model.predict(obs, deterministic=True)
-        # print(f"action: {action} /// states: {_states}")
+        print(f"action: {action} /// states: {_states}")
         obs, reward, done, info = env.step(action)
-        print(reward)
         if done[0] if isinstance(done, (list, tuple, np.ndarray)) else done:
             reset_result = env.reset()
             obs = reset_result[0] if isinstance(reset_result, tuple) else reset_result

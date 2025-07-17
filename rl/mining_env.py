@@ -52,6 +52,7 @@ class MiningEnv(gym.Env):
 
         # Multi-discrete action space: command for each truck
         # Each truck receives an integer command in the range [0, 8]
+        # TODO: Find a way to make assignations only in available trucks.
         self.action_space = gym.spaces.MultiDiscrete([9] * len(self.manager.trucks))
         self.last_processed = 0.0
         self.last_dumped = 0.0
