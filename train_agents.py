@@ -168,8 +168,8 @@ def train(
                 activation_fn=torch.nn.Tanh
             ),
             
-            clip_range=0.15,         # Más conservador
-            ent_coef=0.01,         # Menos exploración
+            clip_range=0.1,         # Más conservador
+            ent_coef=0.05,         # Menos exploración
             device=device
         )
 

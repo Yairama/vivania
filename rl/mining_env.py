@@ -172,8 +172,8 @@ class MiningEnv(gym.Env):
         truncated = self.step_count >= self.max_steps
         info = {
             "throughput": production,
-            "fleet_utilization": np.mean(
-                [1.0 if not t.is_available() else 0.0 for t in self.manager.trucks]
+            "fleet_utilization": np.sum(
+                [1.0 if t.is_available() else 0.0 for t in self.manager.trucks]
             ),
             "lost_mineral": self.manager.dump.total_mineral_dumped,
             "waste_in_crusher": self.manager.crusher.total_waste_dumped,
