@@ -151,25 +151,28 @@ def train(
             tensorboard_log=os.path.join(logdir, "tb"),
             
             # CAMBIOS CRÍTICOS para episodios largos:
-            learning_rate=3e-4,     # Standard PPO
+            learning_rate=lambda f: 5e-4 * (1 - f),     # Standard PPO
             gamma=0.999,            # ¡CRÍTICO! Para episodios de 5k steps
-            gae_lambda=0.98,        # Alto para dependencias largas
+            gae_lambda=0.99,        # Alto para dependencias largas
             
             n_steps=6144,           # ¡CRÍTICO! Buffer >= ~80% episodio
-            batch_size=512,         # Proporcional al buffer grande
-            n_epochs=6,             # Menos épocas con buffer grande
+            batch_size=256,         # Proporcional al buffer grande
+            n_epochs=12,             # Menos épocas con buffer grande
             
             # Red más robusta para episodios complejos
             policy_kwargs=dict(
                 net_arch=dict(
-                    pi=[512, 256, 128],
-                    vf=[512, 256, 128]
+                    pi=[256, 128, 64],      # Más pequeña para evitar overfitting
+                    vf=[256, 128, 64]       # inicial
                 ),
-                activation_fn=torch.nn.Tanh
+                activation_fn=torch.nn.ReLU,
+                optimizer_kwargs=dict(
+                    eps=1e-5,               # Mejor estabilidad numérica
+                )
             ),
             
-            clip_range=0.1,         # Más conservador
-            ent_coef=0.05,         # Menos exploración
+            clip_range=lambda f: 0.3 * (1 - f) + 0.1,  # Decae de 0.3 a 0.1
+            ent_coef=lambda f: 0.15 * (1 - f) + 0.01,  # Decae de 0.15 a 0.01
             device=device
         )
 
