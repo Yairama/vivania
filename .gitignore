@@ -177,3 +177,5 @@ pyrightconfig.json
 .vscode
 training_logs/checkpoints
 training_logs/tb
+*.ipynb
+*.ipynb_checkpoints
