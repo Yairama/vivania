@@ -106,7 +106,7 @@ def train(
     env = make_env(render_mode=render_mode, max_steps=1000000, training=True, stats_path=stats_file if os.path.exists(stats_file) else None)
 
     checkpoint_callback = CheckpointCallback(
-        save_freq=10000,
+        save_freq=100000,
         save_path=os.path.join(logdir, "checkpoints"),
         name_prefix="ppo",
     )
