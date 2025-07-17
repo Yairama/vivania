@@ -225,8 +225,8 @@ class MiningEnv(gym.Env):
 
         production = delta_waste + 2.0 * delta_mineral
 
-        working = np.mean(
-            [1.0 if not t.is_available() else 0.0 for t in self.manager.trucks]
+        working = np.sum(
+            [1.0 if t.is_available() else 0.0 for t in self.manager.trucks]
         )
         queue_penalty = (
             len(self.manager.crusher.queue)
@@ -235,15 +235,15 @@ class MiningEnv(gym.Env):
         )
         wrong_dump_penalty = self.manager.count_wrong_dump_assignments()
         penalty = 0.0
-        # penalty = 0.1 * queue_penalty
-        # penalty += 0.5 * delta_hang
+        penalty = 0.1 * queue_penalty
+        penalty += 0.5 * delta_hang
         penalty += 2.0 * delta_lost
         penalty += 1.0 * delta_wrong
 
         # penalty += 200.0 * wrong_dump_penalty
         # print(f"Production: {production}, Penalty: {penalty}")
-
-        return production - penalty #+ working
+        print(f"working: {working}")
+        return production - penalty - working
 
     def _get_observation(self) -> Dict[str, np.ndarray]:
         """Return a structured observation matching :attr:`observation_space`."""
