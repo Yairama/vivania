@@ -50,10 +50,9 @@ class MiningEnv(gym.Env):
         # Structured observation space
         self._setup_observation_space()
 
-        # Hybrid discrete action space: [truck_index, command]
-        self.action_space = gym.spaces.MultiDiscrete(
-            [len(self.manager.trucks), 9]
-        )
+        # Multi-discrete action space: command for each truck
+        # Each truck receives an integer command in the range [0, 8]
+        self.action_space = gym.spaces.MultiDiscrete([9] * len(self.manager.trucks))
         self.last_processed = 0.0
         self.last_dumped = 0.0
         self.last_mineral_lost = 0.0
@@ -134,21 +133,35 @@ class MiningEnv(gym.Env):
         return obs, info
 
     def step(self, action: np.ndarray):
-        truck_idx, cmd = int(action[0]), int(action[1])
-        if cmd == 0:
-            pass
-        elif 1 <= cmd <= 6:
+        """Execute one step of the environment.
+
+        Parameters
+        ----------
+        action : np.ndarray
+            Array with one command per truck. Each command is an integer in
+            ``[0, 8]``:
+
+            ``0`` - no-op
+            ``1-6`` - dispatch to shovel ``cmd``
+            ``7`` - dispatch loaded truck to crusher
+            ``8`` - dispatch loaded truck to dump site
+        """
+
+        for truck_idx, cmd in enumerate(action):
+            cmd = int(cmd)
             truck = self.manager.trucks[truck_idx]
-            if truck.is_available() and not truck.loading:
-                self.manager.dispatch_shovel(truck.id, cmd)
-        elif cmd == 7:
-            truck = self.manager.trucks[truck_idx]
-            if truck.is_available() and truck.loading:
-                self.manager.dispatch_dump(truck.id, True)
-        elif cmd == 8:
-            truck = self.manager.trucks[truck_idx]
-            if truck.is_available() and truck.loading:
-                self.manager.dispatch_dump(truck.id, False)
+
+            if cmd == 0:
+                continue
+            elif 1 <= cmd <= len(self.manager.shovels):
+                if truck.is_available() and not truck.loading:
+                    self.manager.dispatch_shovel(truck.id, cmd)
+            elif cmd == 7:
+                if truck.is_available() and truck.loading:
+                    self.manager.dispatch_dump(truck.id, True)
+            elif cmd == 8:
+                if truck.is_available() and truck.loading:
+                    self.manager.dispatch_dump(truck.id, False)
         self.manager.update()
         if self.visualizer and not self._visual_paused:
             import pygame

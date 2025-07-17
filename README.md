@@ -154,7 +154,7 @@ mining_simulation/
 - Agregados espaciales: distancias promedio, utilización de flota y penalización por rutas erróneas
 
 **Action Space**:
-- Espacio multidiscreto `[id_camión, comando]`
+- Un comando independiente por camión `[9] * num_trucks`
 - Comando 0: No-op
 - Comandos 1-6: Enviar camión vacío a cada pala
 - Comando 7: Enviar camión cargado al crusher
@@ -291,7 +291,7 @@ python eval.py --from training_logs/best/best_model.zip --mode visual --steps 10
 
 -### **Sistema de Reinforcement Learning**
 - [x] Environment Gymnasium compatible (`MiningEnv`) con observation space optimizado de 116 dimensiones
-- [x] Action space multidiscreto `[id_camión, comando]`
+- [x] Action space multidiscreto con un comando por camión
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento con PPO
  - [x] Checkpoints automáticos
