@@ -268,7 +268,7 @@ class MiningEnv(gym.Env):
         self.last_waste_wrong = self.manager.crusher.total_waste_dumped
         self.last_hang_time = sum(s.hang_time for s in self.manager.shovels)
 
-        production = 2*delta_waste + 4.0 * delta_mineral
+        production = delta_waste + 2.0 * delta_mineral
 
         working = np.sum(
             [1.0 if t.is_available() else 0.0 for t in self.manager.trucks]

@@ -90,7 +90,7 @@ def make_env(render_mode: str, max_steps=800, training=True, stats_path: str | N
         env = VecNormalize.load(stats_path, env)
         env.training = training
     else:
-        env = VecNormalize(env, training=training, norm_obs=True, norm_reward=False)
+        env = VecNormalize(env, training=training, norm_obs=True, norm_reward=True)
     return env
 
 
@@ -151,13 +151,13 @@ def train(
             tensorboard_log=os.path.join(logdir, "tb"),
             
             # CAMBIOS CRÍTICOS para episodios largos:
-            learning_rate=lambda f: 5e-4 * (1 - f),     # Standard PPO
-            gamma=0.999,            # ¡CRÍTICO! Para episodios de 5k steps
-            gae_lambda=0.99,        # Alto para dependencias largas
+            learning_rate=3e-4,
+            gamma=0.995,            # ¡CRÍTICO! Para episodios de 5k steps
+            gae_lambda=0.98,        # Alto para dependencias largas
             
             n_steps=6144,           # ¡CRÍTICO! Buffer >= ~80% episodio
-            batch_size=256,         # Proporcional al buffer grande
-            n_epochs=12,             # Menos épocas con buffer grande
+            batch_size=512,         # Proporcional al buffer grande
+            n_epochs=6,             # Menos épocas con buffer grande
             
             # Red más robusta para episodios complejos
             policy_kwargs=dict(
@@ -171,8 +171,8 @@ def train(
                 )
             ),
             
-            clip_range=lambda f: 0.3 * (1 - f) + 0.1,  # Decae de 0.3 a 0.1
-            ent_coef=lambda f: 0.15 * (1 - f) + 0.01,  # Decae de 0.15 a 0.01
+            clip_range=0.1, #lambda f: 0.3 * (1 - f) + 0.1*f,  # Decae de 0.3 a 0.1
+            ent_coef=0.02,  # Decae de 0.15 a 0.01
             device=device
         )
 

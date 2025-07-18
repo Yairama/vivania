@@ -20,7 +20,7 @@ def make_env(render_mode: str, stats_path: str | None = None):
         env = VecNormalize.load(stats_path, env)
         env.training = False
     else:
-        env = VecNormalize(env, training=False, norm_obs=True, norm_reward=False)
+        env = VecNormalize(env, training=False, norm_obs=True, norm_reward=True)
     return env
 
 
