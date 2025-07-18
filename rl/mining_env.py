@@ -81,6 +81,12 @@ class MiningEnv(gym.Env):
                     dtype=np.float32,
                 ),
                 "aggregates": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                "action_mask": gym.spaces.Box(
+                    low=0,
+                    high=1,
+                    shape=(9 * n_trucks,),
+                    dtype=np.int8,
+                ),
             }
         )
 
@@ -130,7 +136,7 @@ class MiningEnv(gym.Env):
         self.last_waste_wrong = 0.0
         self.last_hang_time = 0.0
         obs = self._get_observation()
-        info = {}
+        info = {"action_mask": self._get_action_mask()}
         return obs, info
 
     def step(self, action: np.ndarray):
@@ -197,6 +203,7 @@ class MiningEnv(gym.Env):
             "mineral_in_dump": self.manager.dump.total_mineral_dumped,
             "waste_in_dump": self.manager.dump.total_dumped,
             "wrong_assignments": self.manager.count_wrong_dump_assignments(),
+            "action_mask": self._get_action_mask(),
         }
         return obs, reward, terminated, truncated, info
 
@@ -219,6 +226,30 @@ class MiningEnv(gym.Env):
             pygame.quit()
             self.visualizer = None
             self.clock = None
+
+    def _get_action_mask(self) -> np.ndarray:
+        """Return a binary mask for valid actions for each truck."""
+        mask = []
+        n_shovels = len(self.manager.shovels)
+        for truck in self.manager.trucks:
+            local = [1]  # no-op is always valid
+            if truck.is_available() and not truck.loading:
+                local.extend([1] * n_shovels)
+            else:
+                local.extend([0] * n_shovels)
+
+            if truck.is_available() and truck.loading:
+                local.extend([1, 1])
+            else:
+                local.extend([0, 0])
+
+            mask.extend(local)
+
+        return np.array(mask, dtype=np.int8)
+
+    # This method name is expected by MaskablePPO
+    def action_masks(self) -> np.ndarray:
+        return self._get_action_mask()
 
     # ------------------------------------------------------------------
     # Helper functions
@@ -283,5 +314,6 @@ class MiningEnv(gym.Env):
             "equipment": equipment_obs,
             "trucks": trucks_obs,
             "aggregates": aggregates_obs,
+            "action_mask": self._get_action_mask(),
         }
 

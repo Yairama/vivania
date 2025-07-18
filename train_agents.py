@@ -3,7 +3,7 @@ import os
 
 import gymnasium as gym
 import torch
-from stable_baselines3 import PPO
+from sb3_contrib import MaskablePPO
 from stable_baselines3.common.callbacks import (
     CheckpointCallback,
     CallbackList,
@@ -101,7 +101,7 @@ def train(
     resume_from: str | None = None,
 ):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    algo_class = PPO
+    algo_class = MaskablePPO
     stats_file = os.path.join(logdir, "checkpoints","vecnormalize.pkl")
     env = make_env(render_mode=render_mode, max_steps=1000000, training=True, stats_path=stats_file if os.path.exists(stats_file) else None)
 
@@ -144,7 +144,7 @@ def train(
             if isinstance(env.observation_space, gym.spaces.Dict)
             else "MlpPolicy"
         )
-        model = PPO(
+        model = MaskablePPO(
             "MultiInputPolicy",
             env,
             verbose=1,
