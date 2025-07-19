@@ -323,7 +323,11 @@ class Visualizer:
         text = small_font.render(waste_wrong, True, (255, 120, 120))
         self.screen.blit(text, (20, y_offset + 54))
 
-        wrong_assign = f"Asig. erróneas: {self.sim.manager.wrong_assignment_count}"
+        if hasattr(self.sim, "manager"):
+            wrong_count = self.sim.manager.wrong_assignment_count
+        else:
+            wrong_count = self.sim.wrong_assignment_count
+        wrong_assign = f"Asig. erróneas: {wrong_count}"
         text = small_font.render(wrong_assign, True, (255, 100, 100))
         self.screen.blit(text, (20, y_offset + 72))
 
