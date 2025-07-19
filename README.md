@@ -21,7 +21,7 @@ El único elemento controlable del simulador es **la asignación de destinos de 
 ### Componentes Principales
 
 #### **Equipos Móviles**
-- **Trucks (Camiones)**: Flota de 20 camiones (6 de 200t y 14 de 180t) con eficiencia individual
+- **Trucks (Camiones)**: Flota de 30 camiones (16 de 200t y 14 de 180t) con eficiencia individual
   - Estados: `waiting_assignment`, `moving_to_shovel`, `loading`, `moving_to_dump`, `dumping`, `returning`
   - Atributos: efficiency (0.75-0.90), velocidad variable por segmento
   - Control de tráfico: distancia mínima entre camiones (30m)
@@ -146,7 +146,7 @@ mining_simulation/
 
 ### Environment: `MiningEnv`
 
-**Observation Space** (116 dimensiones normalizadas):
+**Observation Space** (84 valores continuos + máscara de acción de 270)
  - Estructura jerárquica local/global/comunicación/temporal
  - Estado global: tick, producción total, camiones disponibles
  - Colas y estado de crusher, dump y palas
@@ -219,7 +219,7 @@ FOLLOW_DISTANCE = 30        # Distancia mínima entre camiones (metros)
 ```
 
 ### Características de la Flota:
-- **6 Camiones**: Capacidad 200t, eficiencia variable (0.75-0.90)
+- **30 Camiones (16 de 200t y 14 de 180t)**: Capacidades 180-200t con eficiencia variable (0.75-1.04)
 - **6 Palas**: 3 mineral + 3 waste, diferentes capacidades y eficiencias
 - **Red Vial**: 25 nodos, 40+ segmentos con velocidades realistas
 
@@ -274,7 +274,7 @@ python eval.py --from training_logs/best/best_model.zip --mode visual --steps 10
 ## ✅ Funcionalidades Implementadas
 
 ### **Sistema de Simulación Completo**
-- [x] Modelado realista de equipos mineros (20 camiones, 6 palas, crusher, dump)
+- [x] Modelado realista de equipos mineros (30 camiones, 6 palas, crusher, dump)
 - [x] Red vial con 25 nodos y velocidades diferenciadas por tipo de ruta
 - [x] Control de tráfico y distancias mínimas entre camiones (30m)
 - [x] Gestión de colas FIFO con capacidades limitadas por equipo
@@ -289,12 +289,12 @@ python eval.py --from training_logs/best/best_model.zip --mode visual --steps 10
 - [x] Panel de estadísticas detallado con métricas de performance
 - [x] Leyenda completa y controles interactivos
 
--### **Sistema de Reinforcement Learning**
-- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space optimizado de 116 dimensiones
+### **Sistema de Reinforcement Learning**
+- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space estructurado de 84 valores continuos y una máscara de acción de 270 dimensiones
 - [x] Action space multidiscreto con un comando por camión
 - [x] Función de recompensa balanceada: producción + utilización - penalización de colas
 - [x] Script de entrenamiento con PPO
- - [x] Checkpoints automáticos
+- [x] Checkpoints automáticos
 - [x] Integración completa con TensorBoard para monitoreo
 - [x] Capacidad de reanudar entrenamientos desde checkpoints
 
