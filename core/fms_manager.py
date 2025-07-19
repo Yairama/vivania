@@ -69,6 +69,9 @@ class FMSManager:
         self.crusher = Crusher(self.map.nodes["crusher"])
         self.dump = Dump(self.map.nodes["dump_zone"])
 
+        # Contador acumulado de asignaciones erróneas de descarga
+        self.wrong_assignment_count = 0
+
         self.tick_count = 0
         self._verify_connectivity()
 
@@ -194,6 +197,12 @@ class FMSManager:
                     truck.task = 'moving_to_shovel'
         elif act == 'dispatch_dump':
             destination = 'crusher' if target_id == 0 else 'dump_zone'
+            # Registrar asignación errónea si corresponde
+            if truck.loading and (
+                (destination == 'crusher' and truck.material_type == 'waste') or
+                (destination == 'dump_zone' and truck.material_type == 'mineral')
+            ):
+                self.wrong_assignment_count += 1
             route = self.dijkstra.get_shortest_path(truck.position.name, destination)
             if route and len(route) > 1:
                 truck.assign_route(route)
@@ -238,6 +247,12 @@ class FMSManager:
         if not truck:
             return False
         destination = 'crusher' if to_crusher else 'dump_zone'
+        # Incrementar contador si el camión va al destino equivocado
+        if truck.loading and (
+            (to_crusher and truck.material_type == 'waste') or
+            (not to_crusher and truck.material_type == 'mineral')
+        ):
+            self.wrong_assignment_count += 1
         route = self.dijkstra.get_shortest_path(truck.position.name, destination)
         if route and len(route) > 1:
             truck.assign_route(route)

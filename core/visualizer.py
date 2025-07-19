@@ -269,7 +269,7 @@ class Visualizer:
         current_width, current_height = self.screen.get_size()
         panel_width = min(300, current_width // 3)
         
-        info_bg = pygame.Rect(10, 10, panel_width, min(280, current_height - 20))
+        info_bg = pygame.Rect(10, 10, panel_width, min(340, current_height - 20))
         pygame.draw.rect(self.screen, (40, 45, 50), info_bg)
         pygame.draw.rect(self.screen, (80, 90, 100), info_bg, 2)
         
@@ -311,14 +311,26 @@ class Visualizer:
         text = small_font.render(stats_text, True, (150, 255, 150))
         self.screen.blit(text, (20, y_offset))
         
-        waste_text = f"Waste: {self.sim.dump.total_dumped:.0f}t"
+        waste_text = f"Desmonte: {self.sim.dump.total_dumped:.0f}t"
         text = small_font.render(waste_text, True, (255, 255, 150))
         self.screen.blit(text, (20, y_offset + 18))
-        
+
+        mineral_lost = f"Mineral a botadero: {self.sim.dump.total_mineral_dumped:.0f}t"
+        text = small_font.render(mineral_lost, True, (255, 120, 120))
+        self.screen.blit(text, (20, y_offset + 36))
+
+        waste_wrong = f"Desmonte a chancadora: {self.sim.crusher.total_waste_dumped:.0f}t"
+        text = small_font.render(waste_wrong, True, (255, 120, 120))
+        self.screen.blit(text, (20, y_offset + 54))
+
+        wrong_assign = f"Asig. erróneas: {self.sim.manager.wrong_assignment_count}"
+        text = small_font.render(wrong_assign, True, (255, 100, 100))
+        self.screen.blit(text, (20, y_offset + 72))
+
         # Ticks de simulación
         tick_text = f"Ticks: {self.sim.tick_count}"
         text = small_font.render(tick_text, True, (200, 200, 200))
-        self.screen.blit(text, (20, y_offset + 36))
+        self.screen.blit(text, (20, y_offset + 90))
 
     def _draw_trucks_panel(self, small_font, tiny_font):
         """Dibuja el panel de camiones en movimiento"""
