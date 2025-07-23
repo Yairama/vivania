@@ -1,6 +1,24 @@
 # Open Pit Mining Fleet Management System (FMS) Simulator
 
+
 Un simulador completo de Fleet Management System (FMS) para operaciones mineras de rajo abierto desarrollado en Python con pygame. El sistema modela el comportamiento completo de carga y acarreo de material, enfocándose en la optimización de asignación de destinos mediante algoritmos de aprendizaje por refuerzo.
+
+## 🚀 Inicio rápido
+
+1. Instalar dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Ejecutar el simulador en modo visual:
+   ```bash
+   python main.py --visual
+   ```
+3. Para entrenamiento o ejecución sin ventana:
+   ```bash
+   python main.py
+   ```
+
+---
 
 ## 🎯 Objetivo Principal
 
