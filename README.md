@@ -1,371 +1,370 @@
 # Open Pit Mining Fleet Management System (FMS) Simulator
 
+A comprehensive Fleet Management System (FMS) simulator for open pit mining operations developed in Python with pygame. The system models complete hauling and loading material behavior, focusing on destination assignment optimization through reinforcement learning algorithms.
 
-Un simulador completo de Fleet Management System (FMS) para operaciones mineras de rajo abierto desarrollado en Python con pygame. El sistema modela el comportamiento completo de carga y acarreo de material, enfocándose en la optimización de asignación de destinos mediante algoritmos de aprendizaje por refuerzo.
+## 🚀 Quick Start
 
-## 🚀 Inicio rápido
-
-1. Instalar dependencias:
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-2. Ejecutar el simulador en modo visual:
+2. Run the simulator in visual mode:
    ```bash
    python main.py --visual
    ```
-3. Para entrenamiento o ejecución sin ventana:
+3. For training or headless execution:
    ```bash
    python main.py
    ```
 
 ---
 
-## 🎯 Objetivo Principal
+## 🎯 Main Objective
 
-El simulador permite analizar y optimizar operaciones mineras mediante la simulación realista de:
-- **Fleet Management System (FMS)**: Sistema de gestión de flota que controla asignación de destinos
-- **Ciclos de carga y acarreo**: Modelado completo del comportamiento de camiones mineros
-- **Gestión de colas y tráfico**: Simulación de hang time, queue time y bottlenecks
-- **Optimización por RL**: Entrenamiento de agentes de reinforcement learning para maximizar throughput
+The simulator allows analysis and optimization of mining operations through realistic simulation of:
+- **Fleet Management System (FMS)**: Fleet management system that controls destination assignment
+- **Loading and hauling cycles**: Complete modeling of mining truck behavior
+- **Queue and traffic management**: Simulation of hang time, queue time and bottlenecks
+- **RL optimization**: Training reinforcement learning agents to maximize throughput
 
-### Control Único: Asignación de Destinos
-El único elemento controlable del simulador es **la asignación de destinos de camiones**:
-- ¿A qué pala enviar camiones vacíos?
-- ¿Crusher o dump para descarga de material?
-- Todo lo demás (movimiento, carga, descarga, colas) es simulado automáticamente
+### Single Control: Destination Assignment
+The only controllable element of the simulator is **truck destination assignment**:
+- Which shovel to send empty trucks to?
+- Crusher or dump for material discharge?
+- Everything else (movement, loading, unloading, queues) is automatically simulated
 
-## 🏗️ Arquitectura del Sistema FMS
+## 🏗️ FMS System Architecture
 
-### Componentes Principales
+### Main Components
 
-#### **Equipos Móviles**
-- **Trucks (Camiones)**: Flota de 30 camiones (16 de 200t y 14 de 180t) con eficiencia individual
-  - Estados: `waiting_assignment`, `moving_to_shovel`, `loading`, `moving_to_dump`, `dumping`, `returning`
-  - Atributos: efficiency (0.75-0.90), velocidad variable por segmento
-  - Control de tráfico: distancia mínima entre camiones (30m)
-  - Pathfinding automático con algoritmo Dijkstra
+#### **Mobile Equipment**
+- **Trucks**: Fleet of 30 trucks (16 of 200t and 14 of 180t) with individual efficiency
+  - States: `waiting_assignment`, `moving_to_shovel`, `loading`, `moving_to_dump`, `dumping`, `returning`
+  - Attributes: efficiency (0.75-0.90), variable speed per segment
+  - Traffic control: minimum distance between trucks (30m)
+  - Automatic pathfinding with Dijkstra algorithm
 
-#### **Equipos Fijos**
-- **Shovels (Palas)**: 6 palas cargadoras con diferentes características
-  - **Mineral**: c3 (40t, 85%), c4 (45t, 90%), c5 (47t, 92%)
+#### **Fixed Equipment**
+- **Shovels**: 6 loading shovels with different characteristics
+  - **Ore**: c3 (40t, 85%), c4 (45t, 90%), c5 (47t, 92%)
   - **Waste**: c1 (35t, 70%), c2 (37t, 80%), c6 (47t, 88%)
-  - Tiempo de carga: 5 ticks
-  - Capacidad de cola: máximo 3 camiones
+  - Loading time: 5 ticks
+  - Queue capacity: maximum 3 trucks
 
-- **Crusher (Chancador)**: Procesamiento exclusivo de mineral
+- **Crusher**: Exclusive ore processing
   - Throughput: 200 t/h
-  - Tiempo de proceso: 4 ticks
-  - Capacidad de cola: máximo 2 camiones
+  - Processing time: 4 ticks
+  - Queue capacity: maximum 2 trucks
 
-- **Dump (Botadero)**: Descarga de material estéril y mineral excedente
-  - Tiempo de descarga: 4 ticks
-  - Capacidad de cola: máximo 2 camiones
+- **Dump**: Waste and excess ore disposal
+  - Unloading time: 4 ticks
+  - Queue capacity: maximum 2 trucks
 
-#### **Red Vial Inteligente**
-- **25 Nodos** de conexión estratégicamente ubicados
-- **Segmentos bidireccionales** con velocidades diferenciadas:
-  - **Velocidad vacío**: 18-40 km/h según tipo de ruta
-  - **Velocidad cargado**: ~60% de velocidad vacío
-  - **Rutas principales**: 30-40 km/h (parking ↔ crusher/dump)
-  - **Rutas secundarias**: 25-35 km/h (conexiones internas)
-  - **Acceso a palas**: 18-25 km/h (maniobras lentas)
+#### **Intelligent Road Network**
+- **25 Nodes** strategically connected
+- **Bidirectional segments** with differentiated speeds:
+  - **Empty speed**: 18-40 km/h depending on route type
+  - **Loaded speed**: ~60% of empty speed
+  - **Main routes**: 30-40 km/h (parking ↔ crusher/dump)
+  - **Secondary routes**: 25-35 km/h (internal connections)
+  - **Shovel access**: 18-25 km/h (slow maneuvers)
 
-### Sistema de Control FMS
+### FMS Control System
 
-#### **FMSManager: Núcleo del Sistema**
-La clase `FMSManager` centraliza toda la lógica de control y ofrece:
-- **Control de asignación**: Único punto de decisión del sistema
-- **Estados del sistema**: Monitoreo completo de equipos y colas
-- **Interfaz RL**: Funciones optimizadas para entrenamiento
-  - `get_system_state()`: Estado completo del sistema
-  - `get_available_actions()`: Acciones válidas disponibles
-  - `execute_action()`: Ejecutar decisión de asignación
-  - `calculate_reward()`: Función de recompensa para RL
+#### **FMSManager: System Core**
+The `FMSManager` class centralizes all control logic and offers:
+- **Assignment control**: Single system decision point
+- **System states**: Complete monitoring of equipment and queues
+- **RL interface**: Functions optimized for training
+  - `get_system_state()`: Complete system state
+  - `get_available_actions()`: Available valid actions
+  - `execute_action()`: Execute assignment decision
+  - `calculate_reward()`: Reward function for RL
 
-#### **Simulation: Lógica de Asignación Heurística**
-La clase `Simulation` implementa heurísticas avanzadas para asignación automática:
-- **Balanceo mineral/waste**: Prioriza mineral cuando crusher está disponible
-- **Gestión de colas**: Evita sobresaturar equipos
-- **Eficiencia de distancia**: Considera rutas óptimas
-- **Control de tráfico**: Previene congestión en segmentos
+#### **Simulation: Heuristic Assignment Logic**
+The `Simulation` class implements advanced heuristics for automatic assignment:
+- **Ore/waste balancing**: Prioritizes ore when crusher is available
+- **Queue management**: Avoids equipment oversaturation
+- **Distance efficiency**: Considers optimal routes
+- **Traffic control**: Prevents segment congestion
 
-## 🚀 Instalación y Ejecución
+## 🚀 Installation and Execution
 
-### Prerrequisitos
+### Prerequisites
 ```bash
 pip install -r requirements.txt
 ```
 
-**Dependencias principales:**
-- `pygame>=2.1.0` - Visualización
-- `numpy>=1.21.0` - Cálculos numéricos
+**Main dependencies:**
+- `pygame>=2.1.0` - Visualization
+- `numpy>=1.21.0` - Numerical calculations
 
-**Dependencias RL:**
+**RL dependencies:**
 - `gymnasium>=0.21.0` - Environment wrapper
-- `stable-baselines3>=1.6.0` - Algoritmos RL
+- `stable-baselines3>=1.6.0` - RL algorithms
 - `torch>=1.12.0` - Deep learning
-- `tensorboard>=2.9.0` - Monitoreo de entrenamiento
+- `tensorboard>=2.9.0` - Training monitoring
 
-### Ejecución del Simulador
+### Simulator Execution
 
-**Modo Visual Completo (Análisis y debug):**
+**Full Visual Mode (Analysis and debug):**
 ```bash
 python main.py --visual
 ```
 
-**Modo Headless (Optimizado para entrenamiento RL):**
+**Headless Mode (Optimized for RL training):**
 ```bash
 python main.py
 ```
 
-** TensorBoard:**
+**TensorBoard:**
 ```bash
 tensorboard --logdir training_logs/tb
 ```
 
-### Controles Interactivos
-- **S**: Toggle información de velocidades en segmentos
-- **R**: Toggle rutas activas de camiones
-- **ESC**: Salir del simulador
-- **Redimensionar ventana**: Auto-escalado automático
+### Interactive Controls
+- **S**: Toggle segment speed information
+- **R**: Toggle active truck routes
+- **ESC**: Exit simulator
+- **Resize window**: Automatic auto-scaling
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 mining_simulation/
-├── core/                          # Motor principal del simulador
-│   ├── fms_manager.py            # Núcleo FMS con interfaz RL completa
-│   ├── simulation.py             # Simulador con heurísticas de asignación
-│   ├── truck.py                  # Comportamiento avanzado de camiones
-│   ├── shovel.py                 # Palas con materiales y eficiencias
-│   ├── crusher.py                # Chancador con throughput
-│   ├── dump.py                   # Botadero con estadísticas
-│   ├── mine_map.py               # Red vial con velocidades variables
-│   ├── dijkstra.py               # Pathfinding óptimo
-│   ├── node.py & segment.py      # Infraestructura de red
-│   └── visualizer.py             # Visualización avanzada adaptable
-├── rl/                           # Sistema de Reinforcement Learning
+├── core/                          # Main simulator engine
+│   ├── fms_manager.py            # FMS core with complete RL interface
+│   ├── simulation.py             # Simulator with assignment heuristics
+│   ├── truck.py                  # Advanced truck behavior
+│   ├── shovel.py                 # Shovels with materials and efficiencies
+│   ├── crusher.py                # Crusher with throughput
+│   ├── dump.py                   # Dump with statistics
+│   ├── mine_map.py               # Road network with variable speeds
+│   ├── dijkstra.py               # Optimal pathfinding
+│   ├── node.py & segment.py      # Network infrastructure
+│   └── visualizer.py             # Advanced adaptable visualization
+├── rl/                           # Reinforcement Learning system
 │   ├── mining_env.py             # Gym environment wrapper
 │   └── __init__.py
-├── docs/                         # Documentación técnica
-│   └── rl_env.md                 # Especificación del environment
-├── tests/                        # Tests del sistema
-│   └── test_env.py               # Validación del environment RL
-├── train_agents.py               # Script de entrenamiento RL
-├── run_visual.py                 # Ejecución con visualización
-├── run_headless.py               # Ejecución sin interfaz
-├── config.py                     # Configuración del sistema
-├── logger.py                     # Sistema de logging
-├── requirements.txt              # Dependencias del proyecto
-└── main.py                       # Punto de entrada principal
+├── docs/                         # Technical documentation
+│   └── rl_env.md                 # Environment specification
+├── tests/                        # System tests
+│   └── test_env.py               # RL environment validation
+├── train_agents.py               # RL training script
+├── run_visual.py                 # Execution with visualization
+├── run_headless.py               # Headless execution
+├── config.py                     # System configuration
+├── logger.py                     # Logging system
+├── requirements.txt              # Project dependencies
+└── main.py                       # Main entry point
 ```
 
-## 🤖 Sistema de Reinforcement Learning
+## 🤖 Reinforcement Learning System
 
 ### Environment: `MiningEnv`
 
-**Observation Space** (84 valores continuos + máscara de acción de 270)
- - Estructura jerárquica local/global/comunicación/temporal
- - Estado global: tick, producción total, camiones disponibles
- - Colas y estado de crusher, dump y palas
-- Estado detallado de cada camión (task, carga, eficiencia, distancias)
-- Agregados espaciales: distancias promedio, utilización de flota y penalización por rutas erróneas
+**Observation Space** (84 continuous values + action mask of 270)
+- Hierarchical structure local/global/communication/temporal
+- Global state: tick, total production, available trucks
+- Queues and state of crusher, dump and shovels
+- Detailed state of each truck (task, load, efficiency, distances)
+- Spatial aggregates: average distances, fleet utilization and wrong route penalties
 
 **Action Space**:
-- Un comando independiente por camión `[9] * num_trucks`
-- Comando 0: No-op
-- Comandos 1-6: Enviar camión vacío a cada pala
-- Comando 7: Enviar camión cargado al crusher
-- Comando 8: Enviar camión cargado al dump
+- One independent command per truck `[9] * num_trucks`
+- Command 0: No-op
+- Commands 1-6: Send empty truck to each shovel
+- Command 7: Send loaded truck to crusher
+- Command 8: Send loaded truck to dump
 
 **Reward Function**:
 ```python
 reward = (delta_waste + 2 * delta_mineral) + fleet_utilisation - 0.1 * queue_penalty
 ```
 
-### Entrenamiento de Agentes
+### Agent Training
 
-**Entrenar con PPO (recomendado):**
+**Train with PPO (recommended):**
 ```bash
 python train_agents.py --timesteps 100000 --mode headless
 ```
 
-**Entrenar con visualización (debug):**
+**Train with visualization (debug):**
 ```bash
 python train_agents.py --timesteps 10000 --mode visual
 ```
 
-**Retomar desde un checkpoint:**
+**Resume from checkpoint:**
 ```bash
 python train_agents.py --timesteps 50000 --resume-from training_logs/checkpoints
 ```
 
-**Algoritmo disponible:**
-- **PPO**: Proximal Policy Optimization (recomendado)
+**Available algorithm:**
+- **PPO**: Proximal Policy Optimization (recommended)
 
-**Características del entrenamiento:**
-- Checkpoints automáticos cada 10,000 timesteps
-- Logs de TensorBoard para métricas personalizadas
-- Guardado automático del mejor modelo
-- Retomar entrenamiento desde un checkpoint con `--resume-from`
+**Training features:**
+- Automatic checkpoints every 10,000 timesteps
+- TensorBoard logs for custom metrics
+- Automatic best model saving
+- Resume training from checkpoint with `--resume-from`
 
-### Monitoreo con TensorBoard
+### TensorBoard Monitoring
 
 ```bash
 tensorboard --logdir training_logs/tb
 ```
 
-Métricas disponibles:
-- `rollout/throughput`: Producción total acumulada
-- `rollout/utilization`: Utilización de la flota
-- `rollout/ep_rew_mean`: Recompensa promedio por episodio
-- `rollout/ep_len_mean`: Duración promedio de episodios
-- `rollout/mineral_crusher`: Mineral descargado en chancadora
-- `rollout/mineral_dump`: Mineral descargado en botadero
-- `rollout/waste_in_crusher`: Desmonte descargado en chancadora
-- `rollout/waste_dump`: Desmonte descargado en botadero
-- `rollout/wrong_assignments`: Camiones asignados incorrectamente
+Available metrics:
+- `rollout/throughput`: Total accumulated production
+- `rollout/utilization`: Fleet utilization
+- `rollout/ep_rew_mean`: Average reward per episode
+- `rollout/ep_len_mean`: Average episode duration
+- `rollout/mineral_crusher`: Ore unloaded at crusher
+- `rollout/mineral_dump`: Ore unloaded at dump
+- `rollout/waste_in_crusher`: Waste unloaded at crusher
+- `rollout/waste_dump`: Waste unloaded at dump
+- `rollout/wrong_assignments`: Incorrectly assigned trucks
 
-## 📊 Configuración del Sistema
+## 📊 System Configuration
 
-### Parámetros del Simulador (`config.py`):
+### Simulator Parameters (`config.py`):
 ```python
-SCREEN_WIDTH = 1920         # Resolución de pantalla
+SCREEN_WIDTH = 1920         # Screen resolution
 SCREEN_HEIGHT = 1080
-FPS = 60                    # Frames por segundo
-FOLLOW_DISTANCE = 30        # Distancia mínima entre camiones (metros)
+FPS = 60                    # Frames per second
+FOLLOW_DISTANCE = 30        # Minimum distance between trucks (meters)
 ```
 
-### Características de la Flota:
-- **30 Camiones (16 de 200t y 14 de 180t)**: Capacidades 180-200t con eficiencia variable (0.75-1.04)
-- **6 Palas**: 3 mineral + 3 waste, diferentes capacidades y eficiencias
-- **Red Vial**: 25 nodos, 40+ segmentos con velocidades realistas
+### Fleet Characteristics:
+- **30 Trucks (16 of 200t and 14 of 180t)**: Capacities 180-200t with variable efficiency (0.75-1.04)
+- **6 Shovels**: 3 ore + 3 waste, different capacities and efficiencies
+- **Road Network**: 25 nodes, 40+ segments with realistic speeds
 
-### Velocidades por Tipo de Ruta:
-| Tipo de Ruta | Velocidad Vacío | Velocidad Cargado |
-|--------------|----------------|-------------------|
-| Rutas Principales | 30-40 km/h | 18-25 km/h |
-| Rutas Secundarias | 25-35 km/h | 15-20 km/h |
-| Acceso a Palas | 18-25 km/h | 10-15 km/h |
+### Speeds by Route Type:
+| Route Type | Empty Speed | Loaded Speed |
+|------------|-------------|--------------|
+| Main Routes | 30-40 km/h | 18-25 km/h |
+| Secondary Routes | 25-35 km/h | 15-20 km/h |
+| Shovel Access | 18-25 km/h | 10-15 km/h |
 
-## 📈 Métricas de Rendimiento
+## 📈 Performance Metrics
 
-### KPIs Implementados:
-- **Throughput**: Toneladas procesadas por tipo (mineral prioritario 2x)
-- **Queue Time**: Tiempo promedio en colas por equipo
-- **Fleet Utilization**: % de camiones trabajando vs disponibles
-- **Spatial Efficiency**: Distancias promedio a destinos clave
+### Implemented KPIs:
+- **Throughput**: Tons processed by type (ore priority 2x)
+- **Queue Time**: Average time in queues per equipment
+- **Fleet Utilization**: % of trucks working vs available
+- **Spatial Efficiency**: Average distances to key destinations
 
-### Dashboard en Tiempo Real:
-- Estado de colas por equipo (visual)
-- Camiones en movimiento con velocidades actuales
-- Producción acumulada (mineral vs waste)
-- Rutas activas con códigos de color por velocidad
-- Detección automática de congestión de tráfico
+### Real-time Dashboard:
+- Equipment queue status (visual)
+- Moving trucks with current speeds
+- Accumulated production (ore vs waste)
+- Active routes with color codes by speed
+- Automatic traffic congestion detection
 
-## 🎮 Casos de Uso
+## 🎮 Use Cases
 
-### **1. Análisis Operacional**
+### **1. Operational Analysis**
 ```bash
 python main.py --visual
 ```
-- Visualización en tiempo real del comportamiento del sistema
-- Identificación de bottlenecks y patrones de congestión
-- Evaluación de configuraciones de flota
-- Análisis de impacto de diferentes rutas
+- Real-time visualization of system behavior
+- Bottleneck and congestion pattern identification
+- Fleet configuration evaluation
+- Different route impact analysis
 
-### **2. Entrenamiento de RL**
+### **2. RL Training**
 ```bash
 python train_agents.py --timesteps 100000
 ```
-- Desarrollo de políticas de asignación inteligentes
-- Comparación RL vs heurísticas tradicionales
-- Optimización automática de throughput
-- Monitoreo continuo vía TensorBoard
+- Development of intelligent assignment policies
+- RL vs traditional heuristics comparison
+- Automatic throughput optimization
+- Continuous monitoring via TensorBoard
 
-### **3. Evaluación de Modelos**
+### **3. Model Evaluation**
 ```bash
-# Cargar modelo entrenado y evaluar
+# Load trained model and evaluate
 python eval.py --from training_logs/best/best_model.zip --mode visual --steps 1000
 ```
 
-## ✅ Funcionalidades Implementadas
+## ✅ Implemented Features
 
-### **Sistema de Simulación Completo**
-- [x] Modelado realista de equipos mineros (30 camiones, 6 palas, crusher, dump)
-- [x] Red vial con 25 nodos y velocidades diferenciadas por tipo de ruta
-- [x] Control de tráfico y distancias mínimas entre camiones (30m)
-- [x] Gestión de colas FIFO con capacidades limitadas por equipo
-- [x] Pathfinding automático con algoritmo Dijkstra optimizado
-- [x] Sistema de estados avanzado para camiones con 8 estados distintos
+### **Complete Simulation System**
+- [x] Realistic modeling of mining equipment (30 trucks, 6 shovels, crusher, dump)
+- [x] Road network with 25 nodes and differentiated speeds by route type
+- [x] Traffic control and minimum distances between trucks (30m)
+- [x] FIFO queue management with limited capacities per equipment
+- [x] Automatic pathfinding with optimized Dijkstra algorithm
+- [x] Advanced state system for trucks with 8 distinct states
 
-### **Visualización Profesional**
-- [x] Interfaz pygame redimensionable con auto-escalado
-- [x] Información en tiempo real: colas, velocidades, producción acumulada
-- [x] Códigos de color intuitivos por estado de camión y tipo de ruta
-- [x] Visualización opcional de rutas activas con líneas punteadas
-- [x] Panel de estadísticas detallado con métricas de performance
-- [x] Leyenda completa y controles interactivos
+### **Professional Visualization**
+- [x] Resizable pygame interface with auto-scaling
+- [x] Real-time information: queues, speeds, accumulated production
+- [x] Intuitive color codes by truck state and route type
+- [x] Optional visualization of active routes with dotted lines
+- [x] Detailed statistics panel with performance metrics
+- [x] Complete legend and interactive controls
 
-### **Sistema de Reinforcement Learning**
-- [x] Environment Gymnasium compatible (`MiningEnv`) con observation space estructurado de 84 valores continuos y una máscara de acción de 270 dimensiones
-- [x] Action space multidiscreto con un comando por camión
-- [x] Función de recompensa balanceada: producción + utilización - penalización de colas
-- [x] Script de entrenamiento con PPO
-- [x] Checkpoints automáticos
-- [x] Integración completa con TensorBoard para monitoreo
-- [x] Capacidad de reanudar entrenamientos desde checkpoints
+### **Reinforcement Learning System**
+- [x] Gymnasium compatible environment (`MiningEnv`) with structured observation space of 84 continuous values and action mask of 270 dimensions
+- [x] Multi-discrete action space with one command per truck
+- [x] Balanced reward function: production + utilization - queue penalty
+- [x] PPO training script
+- [x] Automatic checkpoints
+- [x] Complete TensorBoard integration for monitoring
+- [x] Ability to resume training from checkpoints
 
-### **Validación y Testing**
-- [x] Environment validation con `stable_baselines3.common.env_checker`
-- [x] Tests automatizados para verificar terminación de episodios
-- [x] Verificación automática de conectividad de red vial
-- [x] Métricas de sanity check integradas en el simulador
+### **Validation and Testing**
+- [x] Environment validation with `stable_baselines3.common.env_checker`
+- [x] Automated tests to verify episode termination
+- [x] Automatic road network connectivity verification
+- [x] Sanity check metrics integrated in simulator
 
-## 🛠️ Tareas Pendientes
+## 🛠️ Pending Tasks
 
-### **Optimizaciones de Performance**
-- [ ] Optimización del loop principal para entrenamiento más rápido
-- [ ] Implementación de batching para múltiples environments paralelos
-- [ ] Caching inteligente de rutas calculadas frecuentemente
-- [ ] Optimización de memoria para entrenamientos largos
+### **Performance Optimizations**
+- [ ] Main loop optimization for faster training
+- [ ] Batching implementation for multiple parallel environments
+- [ ] Intelligent caching of frequently calculated routes
+- [ ] Memory optimization for long training sessions
 
-### **Extensiones del Environment**
-- [ ] Observation space configurable (diferentes niveles de detalle)
-- [ ] Reward function parametrizable para diferentes objetivos
-- [ ] Soporte para múltiples tipos de material con prioridades variables
-- [ ] Integración de incertidumbre: fallas de equipos, variabilidad de tiempos
+### **Environment Extensions**
+- [ ] Configurable observation space (different detail levels)
+- [ ] Parameterizable reward function for different objectives
+- [ ] Support for multiple material types with variable priorities
+- [ ] Uncertainty integration: equipment failures, time variability
 
-### **Algoritmos Avanzados**
-- [ ] Implementación de algoritmos multi-agente (MADDPG, QMIX)
-- [ ] Comparación con métodos de optimización clásicos (genetic algorithms)
-- [ ] Hyperparameter tuning automático con Optuna
-- [ ] Transfer learning entre configuraciones de mina diferentes
+### **Advanced Algorithms**
+- [ ] Multi-agent algorithm implementation (MADDPG, QMIX)
+- [ ] Comparison with classical optimization methods (genetic algorithms)
+- [ ] Automatic hyperparameter tuning with Optuna
+- [ ] Transfer learning between different mine configurations
 
-### **Análisis y Métricas**
-- [ ] Dashboard web interactivo para análisis post-entrenamiento
-- [ ] Exportación de datos a formatos estándar (CSV, JSON)
-- [ ] Análisis estadístico automático de performance
-- [ ] Generación automática de reportes de optimización
+### **Analysis and Metrics**
+- [ ] Interactive web dashboard for post-training analysis
+- [ ] Data export to standard formats (CSV, JSON)
+- [ ] Automatic statistical performance analysis
+- [ ] Automatic optimization report generation
 
-### **Validación Industrial**
-- [ ] Calibración con datos reales de operaciones mineras
-- [ ] Benchmarking contra sistemas FMS comerciales
-- [ ] Casos de estudio con diferentes configuraciones de mina
-- [ ] Validación de escalabilidad para flotas más grandes
+### **Industrial Validation**
+- [ ] Calibration with real mining operation data
+- [ ] Benchmarking against commercial FMS systems
+- [ ] Case studies with different mine configurations
+- [ ] Scalability validation for larger fleets
 
-## 🔧 Personalización Avanzada
+## 🔧 Advanced Customization
 
-### **Modificar Configuración de Flota:**
+### **Modify Fleet Configuration:**
 ```python
-# En fms_manager.py
+# In fms_manager.py
 self.trucks = [
     Truck(i, capacity=300, position=start_node, efficiency=0.90) 
-    for i in range(8)  # Cambiar número y características
+    for i in range(8)  # Change number and characteristics
 ]
 ```
 
-### **Agregar Nuevas Palas:**
+### **Add New Shovels:**
 ```python
 new_shovel = Shovel(
     id=7, 
@@ -377,32 +376,32 @@ new_shovel = Shovel(
 self.shovels.append(new_shovel)
 ```
 
-### **Personalizar Función de Recompensa:**
+### **Customize Reward Function:**
 ```python
-# En mining_env.py, método _calculate_reward()
+# In mining_env.py, _calculate_reward() method
 def _calculate_reward(self) -> float:
-    # Personalizar pesos y penalizaciones
-    production = delta_waste + 3.0 * delta_mineral  # Mayor peso a mineral
-    efficiency_bonus = working * 0.5  # Bonus por utilización
-    queue_penalty = queue_total * 0.2  # Mayor penalización por colas
+    # Customize weights and penalties
+    production = delta_waste + 3.0 * delta_mineral  # Higher weight for ore
+    efficiency_bonus = working * 0.5  # Bonus for utilization
+    queue_penalty = queue_total * 0.2  # Higher penalty for queues
     return production + efficiency_bonus - queue_penalty
 ```
 
-## 📝 Notas Técnicas
+## 📝 Technical Notes
 
-### **Arquitectura del Simulador**
-- **Tick-based system**: Actualizaciones discretas (1 tick ≈ 0.1 horas simuladas)
-- **Event-driven**: Estados y transiciones bien definidos para cada equipo
-- **Modular design**: Fácil extensión y modificación de componentes
-- **Performance optimized**: Modo headless para entrenamiento RL intensivo
+### **Simulator Architecture**
+- **Tick-based system**: Discrete updates (1 tick ≈ 0.1 simulated hours)
+- **Event-driven**: Well-defined states and transitions for each equipment
+- **Modular design**: Easy extension and modification of components
+- **Performance optimized**: Headless mode for intensive RL training
 
-### **Consideraciones de RL**
-- **Normalización automática**: Observations normalizadas usando `VecNormalize`
-- **Episode management**: Terminación por producción objetivo (400t) o límite de pasos (800)
-- **Reward engineering**: Balance entre throughput, eficiencia y prevención de deadlocks
+### **RL Considerations**
+- **Automatic normalization**: Normalized observations using `VecNormalize`
+- **Episode management**: Termination by production target (400t) or step limit (800)
+- **Reward engineering**: Balance between throughput, efficiency and deadlock prevention
 
 ---
 
-**Simulador FMS desarrollado como plataforma de investigación para Fleet Management Systems mineros con capacidades completas de Reinforcement Learning.**
+**FMS Simulator developed as a research platform for mining Fleet Management Systems with complete Reinforcement Learning capabilities.**
 
-*Objetivo: Proporcionar una plataforma robusta para el desarrollo y evaluación de algoritmos de asignación inteligente en operaciones mineras, combinando simulación realista con técnicas de IA avanzadas.*
+*Objective: Provide a robust platform for the development and evaluation of intelligent assignment algorithms in mining operations, combining realistic simulation with advanced AI techniques.*
