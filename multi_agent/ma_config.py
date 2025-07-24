@@ -5,12 +5,12 @@ from ray.rllib.algorithms.mappo import MAPPOConfig
 from .ma_mining_env import MiningParallelEnv
 
 
-def get_default_config() -> MAPPOConfig:
+def get_default_config(render_mode: str = "headless") -> MAPPOConfig:
     """Return a basic MAPPO configuration for the mining environment."""
-    env = MiningParallelEnv()
+    env = MiningParallelEnv(render_mode=render_mode)
     config = (
         MAPPOConfig()
-        .environment(env=MiningParallelEnv)
+        .environment(env=MiningParallelEnv, env_config={"render_mode": render_mode})
         .framework("torch")
         .rollouts(num_rollout_workers=0)
         .training(train_batch_size=4000)
