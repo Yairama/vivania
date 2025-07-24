@@ -43,16 +43,16 @@ class MultiAgentFMSManager(FMSManager):
 ## Fase 2: Environment Multi-Agent (2-3 días)
 
 ### Tarea 2.1: Crear ma_mining_env.py
-- [ ] **PettingZoo ParallelEnv**: Implementar desde cero
-- [ ] **Agent spaces**: 30 agentes truck_0 a truck_29
-- [ ] **Action masking**: Solo acciones válidas por camión
-- [ ] **Termination handling**: Episodios multi-agente
+- [x] **PettingZoo ParallelEnv**: Implementar desde cero
+- [x] **Agent spaces**: 30 agentes truck_0 a truck_29
+- [x] **Action masking**: Solo acciones válidas por camión
+- [x] **Termination handling**: Episodios multi-agente
 
 ### Tarea 2.2: Recompensas cooperativas
-- [ ] **Individual efficiency**: Productividad del camión
-- [ ] **Global contribution**: Impacto en throughput total
-- [ ] **Coordination bonus**: Evitar congestión, balancear colas
-- [ ] **Difference rewards**: Marginal contribution al sistema
+- [x] **Individual efficiency**: Productividad del camión
+- [x] **Global contribution**: Impacto en throughput total
+- [x] **Coordination bonus**: Evitar congestión, balancear colas
+- [x] **Difference rewards**: Marginal contribution al sistema
 
 ```python
 reward = 0.4 * individual + 0.3 * global_contrib + 0.3 * coordination
@@ -61,16 +61,16 @@ reward = 0.4 * individual + 0.3 * global_contrib + 0.3 * coordination
 ## Fase 3: Training Pipeline (2-3 días)
 
 ### Tarea 3.1: Configuración RLlib (ma_config.py)
-- [ ] **MAPPO setup**: Parameter sharing para camiones homogéneos
-- [ ] **Centralized critic**: Ve estado global durante training
-- [ ] **Decentralized execution**: Solo observaciones locales en producción
-- [ ] **Custom policy**: Red neuronal optimizada para coordinación
+- [x] **MAPPO setup**: Parameter sharing para camiones homogéneos
+- [x] **Centralized critic**: Ve estado global durante training
+- [x] **Decentralized execution**: Solo observaciones locales en producción
+- [x] **Custom policy**: Red neuronal optimizada para coordinación
 
 ### Tarea 3.2: Script de entrenamiento (ma_train.py)
 - [ ] **Ray cluster setup**: Entrenamiento distribuido
 - [ ] **Hyperparameter tuning**: Learning rates, batch sizes
 - [ ] **Curriculum learning**: Empezar con pocos camiones, escalar gradualmente
-- [ ] **Checkpointing**: Guardar progreso y reanudar
+- [x] **Checkpointing**: Guardar progreso y reanudar
 
 ### Tarea 3.3: Métricas y monitoring
 - [ ] **Multi-agent TensorBoard**: Métricas individuales y cooperativas
