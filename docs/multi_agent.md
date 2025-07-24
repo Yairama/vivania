@@ -16,11 +16,11 @@ multi_agent/
 ## Fase 1: FMSManager Multi-Agent (3-4 días)
 
 ### Tarea 1.1: Crear ma_fms_manager.py
-- [ ] **Copiar FMSManager** como base y hacer modificaciones para que funcione en multi-agent
-- [ ] **Separar observaciones por agente**: Una función por camión
-- [ ] **Action distribution**: Recibir dict de acciones {agent_id: action}
-- [ ] **Individual rewards**: Calcular reward por agente
-- [ ] **Coordination signals**: Agregar info de otros camiones a observaciones
+- [x] **Copiar FMSManager** como base y hacer modificaciones para que funcione en multi-agent
+- [x] **Separar observaciones por agente**: Una función por camión
+- [x] **Action distribution**: Recibir dict de acciones {agent_id: action}
+- [x] **Individual rewards**: Calcular reward por agente
+- [x] **Coordination signals**: Agregar info de otros camiones a observaciones
 
 ```python
 class MultiAgentFMSManager(FMSManager):
@@ -36,9 +36,9 @@ class MultiAgentFMSManager(FMSManager):
 ```
 
 ### Tarea 1.2: Observaciones locales + coordinación
-- [ ] **Estado local** (12 dims): posición, carga, tarea, distancias
-- [ ] **Coordinación** (8 dims): camiones cercanos, colas, congestión
-- [ ] **Estado global** (5 dims): throughput, equipos disponibles
+- [x] **Estado local** (12 dims): posición, carga, tarea, distancias
+- [x] **Coordinación** (8 dims): camiones cercanos, colas, congestión
+- [x] **Estado global** (5 dims): throughput, equipos disponibles
 
 ## Fase 2: Environment Multi-Agent (2-3 días)
 
