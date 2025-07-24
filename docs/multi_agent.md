@@ -73,9 +73,11 @@ reward = 0.4 * individual + 0.3 * global_contrib + 0.3 * coordination
 - [x] **Checkpointing**: Guardar progreso y reanudar
 
 ### Tarea 3.3: Métricas y monitoring
-- [ ] **Multi-agent TensorBoard**: Métricas individuales y cooperativas
-- [ ] **Coordination metrics**: Análisis de patrones emergentes
-- [ ] **Scalability tests**: Performance con diferentes tamaños de flota
+- [x] **Multi-agent TensorBoard**: Métricas individuales y cooperativas
+- [x] **Coordination metrics**: Análisis de patrones emergentes
+- [x] **Scalability tests**: Performance con diferentes tamaños de flota
+  Implementado en `ma_train.py` con registros de TensorBoard y métricas de
+  coordinación para evaluar distintos tamaños de flota.
 
 ## Fase 4: Ideas valiosas del roadmap original
 
