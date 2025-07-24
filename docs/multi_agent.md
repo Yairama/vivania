@@ -1,179 +1,134 @@
-# Roadmap Multi-Agent DRL con RLlib
-## Fleet Management System - Arquitectura Escalable
+# Multi-Agent FMS: Roadmap Práctico
 
-### 🎯 Meta: Modelo agnóstico al tamaño de flota usando RLlib
+## Objetivo: Sistema paralelo multi-agente sin tocar single-agent
 
-Un modelo entrenado con 30 camiones debe funcionar seamlessly con 50, 100, o cualquier número de camiones.
-
----
-
-## 📋 Fase 1: Arquitectura Base RLlib
-
-### Tarea 1.1: MiningFleetMultiAgentEnv
-**Archivo:** `multi_agent/mining_fleet_rllib_env.py`
-
-Crear ambiente heredando de `ray.rllib.env.MultiAgentEnv`.
-
-**Componentes:**
-- Agent IDs dinámicos: `f"truck_{truck.id}"`
-- Observation space: 40 dims fijas por agente
-- Action space: Discrete(9) idéntico para todos
-- Reward distribution individual y global
-- Terminación basada en métricas de producción
-
-### Tarea 1.2: TruckAgentSpace  
-**Archivo:** `multi_agent/truck_agent_space.py`
-
-Diseñar espacios escalables independientes del tamaño de flota.
-
-**Observation Space (40 dims):**
-- Local state (15): posición, carga, tarea, eficiencia
-- Spatial context (12): distancias, densidad tráfico
-- Global context (8): utilización equipos, throughput
-- Coordination signals (5): señales agregadas otros agentes
-
-**Action Space:** Discrete(9) - 0:no-op, 1-6:shovels, 7:crusher, 8:dump
-
-### Tarea 1.3: GlobalStateProcessor
-**Archivo:** `multi_agent/global_state_processor.py`
-
-Procesar estado FMSManager → representaciones agregadas escalables.
-
-**Output:** Vector dimensión fija con métricas agregadas (utilización, tráfico, colas) sin dependencias de número de agentes.
-
----
-
-## 📋 Fase 2: Algoritmos Multi-Agente
-
-### Tarea 2.1: MAPPO Configuration
-**Archivo:** `multi_agent/mappo_config.py`
-
-Configurar Multi-Agent PPO con parameter sharing y centralized critic.
-
-```python
-config = {
-    "multiagent": {
-        "policies": {"shared_truck_policy": (None, obs_space, action_space, {})},
-        "policy_mapping_fn": lambda agent_id: "shared_truck_policy",
-    },
-    "use_centralized_vf": True,
-    "lr": 3e-4,
-    "gamma": 0.995,
-    "train_batch_size": 8192,
-}
+### Estructura de archivos
+```
+multi_agent/
+├── __init__.py
+├── ma_fms_manager.py      # FMSManager adaptado para multi-agent
+├── ma_mining_env.py       # Environment multi-agent desde cero
+├── ma_train.py            # Entrenamiento RLlib
+├── ma_config.py           # Configuración MAPPO
+└── ma_eval.py             # Evaluación modelos
 ```
 
-### Tarea 2.2: CustomTruckPolicy
-**Archivo:** `multi_agent/custom_truck_policy.py`
+## Fase 1: FMSManager Multi-Agent (3-4 días)
 
-Policy network optimizada para fleet coordination.
-
-**Arquitectura:** Feature extractor → Context encoder → Attention → Action/Value heads
-
-### Tarea 2.3: Centralized Critic Config
-**Archivo:** `multi_agent/centralized_critic_config.py`
-
-Configurar critic que ve estado global completo para evaluar coordinación.
-
----
-
-## 📋 Fase 3: Sistema de Coordinación
-
-### Tarea 3.1: CoordinationRewardShaper
-**Archivo:** `multi_agent/coordination_reward_shaper.py`
-
-Rewards multi-objetivo balanceando performance individual y coordinación.
+### Tarea 1.1: Crear ma_fms_manager.py
+- [ ] **Copiar FMSManager** como base
+- [ ] **Separar observaciones por agente**: Una función por camión
+- [ ] **Action distribution**: Recibir dict de acciones {agent_id: action}
+- [ ] **Individual rewards**: Calcular reward por agente
+- [ ] **Coordination signals**: Agregar info de otros camiones a observaciones
 
 ```python
-reward = 0.4 * individual_efficiency + 0.3 * global_contribution + 
-         0.2 * coordination_bonus + 0.1 * exploration - penalties
+class MultiAgentFMSManager(FMSManager):
+    def get_agent_observation(self, truck_id):
+        # Local: estado del camión + entorno cercano
+        # Global: estado equipos + otros camiones
+        
+    def execute_multi_actions(self, actions_dict):
+        # {truck_0: action, truck_1: action, ...}
+        
+    def get_individual_rewards(self):
+        # Recompensa por contribución individual + cooperación
 ```
 
-### Tarea 3.2: ActionMaskingProcessor
-**Archivo:** `multi_agent/action_masking_processor.py`
+### Tarea 1.2: Observaciones locales + coordinación
+- [ ] **Estado local** (12 dims): posición, carga, tarea, distancias
+- [ ] **Coordinación** (8 dims): camiones cercanos, colas, congestión
+- [ ] **Estado global** (5 dims): throughput, equipos disponibles
 
-Máscaras inteligentes: validez básica → capacity awareness → coordinación.
+## Fase 2: Environment Multi-Agent (2-3 días)
 
-### Tarea 3.3: CurriculumLearningScheduler
-**Archivo:** `multi_agent/curriculum_learning_scheduler.py`
+### Tarea 2.1: Crear ma_mining_env.py
+- [ ] **PettingZoo ParallelEnv**: Implementar desde cero
+- [ ] **Agent spaces**: 30 agentes truck_0 a truck_29
+- [ ] **Action masking**: Solo acciones válidas por camión
+- [ ] **Termination handling**: Episodios multi-agente
 
-Escalamiento progresivo de complejidad usando RLlib callbacks.
-
-**Fases:** 8-12 camiones → 15-20 → 25-30 → tamaños variables
-
----
-
-## 📋 Fase 4: Entrenamiento Distribuido
-
-### Tarea 4.1: Distributed Training Config
-**Archivo:** `multi_agent/distributed_training_config.py`
+### Tarea 2.2: Recompensas cooperativas
+- [ ] **Individual efficiency**: Productividad del camión
+- [ ] **Global contribution**: Impacto en throughput total
+- [ ] **Coordination bonus**: Evitar congestión, balancear colas
+- [ ] **Difference rewards**: Marginal contribution al sistema
 
 ```python
-config = {
-    "num_workers": 16,
-    "num_envs_per_worker": 4,
-    "num_gpus": 1,
-    "train_batch_size": 16384,
-}
+reward = 0.4 * individual + 0.3 * global_contrib + 0.3 * coordination
 ```
 
-### Tarea 4.2: Hyperparameter Tuning
-**Archivo:** `multi_agent/hyperparameter_tuning.py`
+## Fase 3: Training Pipeline (2-3 días)
 
-Usar Ray Tune para optimización automática de hiperparámetros.
+### Tarea 3.1: Configuración RLlib (ma_config.py)
+- [ ] **MAPPO setup**: Parameter sharing para camiones homogéneos
+- [ ] **Centralized critic**: Ve estado global durante training
+- [ ] **Decentralized execution**: Solo observaciones locales en producción
+- [ ] **Custom policy**: Red neuronal optimizada para coordinación
 
-### Tarea 4.3: TransferLearningValidator
-**Archivo:** `multi_agent/transfer_learning_validator.py`
+### Tarea 3.2: Script de entrenamiento (ma_train.py)
+- [ ] **Ray cluster setup**: Entrenamiento distribuido
+- [ ] **Hyperparameter tuning**: Learning rates, batch sizes
+- [ ] **Curriculum learning**: Empezar con pocos camiones, escalar gradualmente
+- [ ] **Checkpointing**: Guardar progreso y reanudar
 
-Validar transferencia entre diferentes tamaños de flota.
+### Tarea 3.3: Métricas y monitoring
+- [ ] **Multi-agent TensorBoard**: Métricas individuales y cooperativas
+- [ ] **Coordination metrics**: Análisis de patrones emergentes
+- [ ] **Scalability tests**: Performance con diferentes tamaños de flota
 
-**Tests:** Scale-up, scale-down, robustness
-**Métricas:** Performance retention, adaptation speed, coordination quality
+## Fase 4: Ideas valiosas del roadmap original
 
----
+### Tarea 4.1: Action masking inteligente
+- [ ] **Dynamic masking**: Basado en estado actual + disponibilidad equipos
+- [ ] **Capacity awareness**: Considerar colas y límites de equipos
+- [ ] **Traffic awareness**: Evitar congestión en rutas
 
-## 📋 Fase 5: Monitoreo y Análisis
+### Tarea 4.2: Transfer learning entre escalas
+- [ ] **Model portability**: Entrenar con 20 camiones, usar con 30
+- [ ] **Fleet-size agnostic**: Modelo que funcione con cualquier número
+- [ ] **Adaptation mechanisms**: Fine-tuning rápido para nuevas configuraciones
 
-### Tarea 5.1: MultiAgentTensorBoardLogger
-**Archivo:** `multi_agent/multi_agent_tensorboard_logger.py`
+### Tarea 4.3: Distributed training optimization
+- [ ] **Multi-worker setup**: Paralelizar envs y políticas
+- [ ] **Experience sharing**: Buffer compartido entre workers
+- [ ] **Asynchronous updates**: Training no-bloqueante
 
-Métricas especializadas: coordinación, utilización, patrones emergentes.
+## Fase 5: Validación y comparación (2-3 días)
 
-### Tarea 5.2: RealTimeCoordinationAnalyzer
-**Archivo:** `multi_agent/coordination_analyzer.py`
+### Taska 5.1: Benchmarking
+- [ ] **Single vs Multi-agent**: Comparación directa de performance
+- [ ] **Ablation studies**: Componentes que más contribuyen
+- [ ] **Scalability analysis**: Tiempo de training vs número de agentes
 
-Análisis real-time de patrones de coordinación y decisiones.
+### Tarea 5.2: Integration testing
+- [ ] **Compatibility check**: Usar mismo visualizador
+- [ ] **Performance profiling**: Memory y CPU usage
+- [ ] **Robustness testing**: Fallos de equipos, scenarios adversos
 
-### Tarea 5.3: ModelComparisonSuite
-**Archivo:** `multi_agent/model_comparison_suite.py`
+## Ideas descartadas (por simplicidad):
+- ❌ Agentes coordinadores jerárquicos
+- ❌ Comunicación explícita aprendida
+- ❌ Meta-learning y adaptation online
+- ❌ Human-AI interaction
+- ❌ Auction mechanisms
 
-Comparación contra sistema actual y heurísticas clásicas.
+## Ideas incluidas (valor agregado):
+- ✅ Transfer learning entre tamaños de flota
+- ✅ Centralized training + decentralized execution
+- ✅ Action masking dinámico
+- ✅ Curriculum learning
+- ✅ Distributed training
+- ✅ Difference rewards para coordinación
 
----
+## Timeline: 2-3 semanas
+- Semana 1: FMSManager + Environment multi-agent
+- Semana 2: Training pipeline + configuración
+- Semana 3: Validación + optimización
 
-## 📋 Fase 6: Validación Final
-
-### Tarea 6.1: ProductionReadinessValidator
-**Archivo:** `multi_agent/production_readiness_validator.py`
-
-Validación comprehensiva para deployment potencial.
-
-### Tarea 6.2: ModelPortabilityFramework
-**Archivo:** `multi_agent/model_portability_framework.py`
-
-Tools para adaptar modelos a diferentes operaciones mineras.
-
-### Tarea 6.3: BenchmarkReportGenerator
-**Archivo:** `multi_agent/benchmark_report_generator.py`
-
-Reportes comprehensivos de performance y escalabilidad.
-
----
-
-## 🎯 Resultado Esperado
-
-- Sistema fleet-size agnóstico
-- Performance superior al sistema actual  
-- Coordinación emergente efectiva
-- Capacidades de transfer learning validadas
-- Ready para deployment industrial
+## Ventajas del enfoque:
+1. **Sistema paralelo**: Single-agent intacto
+2. **Reutilización**: Máximo aprovechamiento código existente
+3. **Escalabilidad**: Funciona con cualquier número de camiones
+4. **Coordinación emergente**: Sin over-engineering
+5. **Production ready**: Deployment directo
