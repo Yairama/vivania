@@ -1,4 +1,4 @@
-from numpy._typing._array_like import NDArray
+from numpy.typing import NDArray
 from core.mine_map import MineMap
 from core.truck import Truck
 from core.shovel import Shovel

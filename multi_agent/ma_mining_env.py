@@ -4,23 +4,33 @@ from typing import Dict, Tuple
 
 import numpy as np
 from gymnasium import spaces
-from pettingzoo.utils import parallel_env
+from pettingzoo.utils import ParallelEnv
 
 from .ma_fms_manager import MultiAgentFMSManager
 
 
-class MiningParallelEnv(parallel_env.ParallelEnv):
+class MiningParallelEnv(ParallelEnv):
     """PettingZoo parallel environment wrapping :class:`MultiAgentFMSManager`."""
 
     metadata = {"name": "MiningParallel-v0"}
 
-    def __init__(self, max_steps: int = 100000, target_production: float = 8000.0):
+    def __init__(
+        self,
+        max_steps: int = 100000,
+        target_production: float = 8000.0,
+        render_mode: str = "headless",
+    ):
         self.max_steps = max_steps
         self.target_production = target_production
+        self.render_mode = render_mode
         self.manager = MultiAgentFMSManager()
         self.step_count = 0
         self.possible_agents = [f"truck_{i}" for i in range(len(self.manager.trucks))]
         self.agents = list(self.possible_agents)
+        self.visualizer = None
+        self.clock = None
+        if self.render_mode == "visual":
+            self._init_pygame()
 
         obs_dim = len(self.manager.get_agent_observation(self.manager.trucks[0].id))
         n_actions = len(self.manager.shovels) + 3
@@ -48,6 +58,33 @@ class MiningParallelEnv(parallel_env.ParallelEnv):
             f"truck_{i}": self._get_action_mask(truck)
             for i, truck in enumerate(self.manager.trucks)
         }
+
+    # ------------------------------------------------------------------
+    # Pygame helpers
+    # ------------------------------------------------------------------
+    def _init_pygame(self):
+        import pygame
+        from core.visualizer import Visualizer
+
+        pygame.init()
+        self.clock = pygame.time.Clock()
+        self.visualizer = Visualizer(self.manager)
+
+    def _handle_pygame_events(self):
+        import pygame
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (
+                event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
+            ):
+                pygame.quit()
+                self.visualizer = None
+                self.render_mode = "headless"
+                self.clock = None
+                break
+            else:
+                if self.visualizer:
+                    self.visualizer.handle_input(event)
     # ------------------------------------------------------------------
     # ParallelEnv API
     # ------------------------------------------------------------------
@@ -55,6 +92,8 @@ class MiningParallelEnv(parallel_env.ParallelEnv):
         self.manager = MultiAgentFMSManager()
         self.step_count = 0
         self.agents = list(self.possible_agents)
+        if self.visualizer:
+            self.visualizer.sim = self.manager
         observations = {
             a: np.array(self.manager.get_agent_observation(i + 1), dtype=np.float32)
             for i, a in enumerate(self.agents)
@@ -67,6 +106,11 @@ class MiningParallelEnv(parallel_env.ParallelEnv):
         self.manager.execute_multi_actions(actions_dict)
         self.manager.update()
         self.step_count += 1
+        if self.render_mode == "visual" and self.visualizer:
+            self._handle_pygame_events()
+            self.visualizer.draw()
+            if self.clock:
+                self.clock.tick(60)
 
         observations = {
             a: np.array(self.manager.get_agent_observation(i + 1), dtype=np.float32)
@@ -92,7 +136,18 @@ class MiningParallelEnv(parallel_env.ParallelEnv):
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
-        pass
+        if self.visualizer:
+            self._handle_pygame_events()
+            self.visualizer.draw()
+            if self.clock:
+                self.clock.tick(60)
 
     def close(self):
         self.agents = []
+        if self.visualizer:
+            import pygame
+
+            pygame.quit()
+            self.visualizer = None
+            self.clock = None
+        
