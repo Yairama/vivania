@@ -7,7 +7,7 @@ from sb3_contrib import MaskablePPO
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
-from rl.mining_env import MiningEnv
+from .rl.mining_env import MiningEnv
 
 
 def make_env(render_mode: str, stats_path: str | None = None):
