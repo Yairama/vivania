@@ -2,8 +2,8 @@ import os
 import shutil
 import unittest
 
-from train_agents import train
-from eval import evaluate
+from single_agent.train_agents import train
+from single_agent.eval import evaluate
 
 
 class EvalTest(unittest.TestCase):

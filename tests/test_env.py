@@ -3,7 +3,7 @@ import sys
 from stable_baselines3.common.env_checker import check_env
 
 sys.path.append(".")
-from rl.mining_env import MiningEnv
+from single_agent.rl.mining_env import MiningEnv
 
 
 class EnvTest(unittest.TestCase):

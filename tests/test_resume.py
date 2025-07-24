@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from train_agents import train
+from single_agent.train_agents import train
 
 
 class ResumeTest(unittest.TestCase):
