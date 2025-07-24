@@ -13,7 +13,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 import logging
-from rl.mining_env import MiningEnv
+from .rl.mining_env import MiningEnv
 
 logger = logging.getLogger(__name__)
 
