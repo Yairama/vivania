@@ -16,7 +16,7 @@ multi_agent/
 ## Fase 1: FMSManager Multi-Agent (3-4 días)
 
 ### Tarea 1.1: Crear ma_fms_manager.py
-- [ ] **Copiar FMSManager** como base
+- [ ] **Copiar FMSManager** como base y hacer modificaciones para que funcione en multi-agent
 - [ ] **Separar observaciones por agente**: Una función por camión
 - [ ] **Action distribution**: Recibir dict de acciones {agent_id: action}
 - [ ] **Individual rewards**: Calcular reward por agente
