@@ -157,7 +157,7 @@ def train(
             
             n_steps=6144,           # ¡CRÍTICO! Buffer >= ~80% episodio
             batch_size=512,         # Proporcional al buffer grande
-            n_epochs=6,             # Menos épocas con buffer grande
+            n_epochs=5,             # Menos épocas con buffer grande
             
             # Red más robusta para episodios complejos
             policy_kwargs=dict(
@@ -171,8 +171,8 @@ def train(
                 )
             ),
             
-            clip_range=0.1, #lambda f: 0.3 * (1 - f) + 0.1*f,  # Decae de 0.3 a 0.1
-            ent_coef=0.02,  # Decae de 0.15 a 0.01
+            clip_range=0.2, #lambda f: 0.3 * (1 - f) + 0.1*f,  # Decae de 0.3 a 0.1
+            ent_coef=0.15,  # Decae de 0.15 a 0.01
             device=device
         )
 
