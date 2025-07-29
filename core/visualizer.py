@@ -17,6 +17,11 @@ class Visualizer:
         self.show_speed_info = False
         self.show_truck_paths = True
         
+        # Variables para tooltip
+        self.mouse_pos = (0, 0)
+        self.tooltip_info = None
+        self.tooltip_target = None
+        
         # Calcular escalado automático del mapa
         self._calculate_map_bounds()
         self._update_scaling()
@@ -76,6 +81,9 @@ class Visualizer:
     def draw(self):
         current_width, current_height = self.screen.get_size()
         self.screen.fill((20, 25, 30))  # Fondo más oscuro y profesional
+        
+        # Actualizar posición del mouse y detectar tooltips
+        self._update_mouse_and_tooltips()
         
         # Fuentes adaptables al tamaño de ventana
         font_size = max(14, int(current_width / 60))
@@ -228,6 +236,10 @@ class Visualizer:
         
         # Instrucciones y controles
         self._draw_controls(tiny_font)
+        
+        # Dibujar tooltip si existe
+        if self.tooltip_info:
+            self._draw_tooltip(small_font, tiny_font)
 
         pygame.display.flip()
         
@@ -418,14 +430,15 @@ class Visualizer:
         current_width, current_height = self.screen.get_size()
         controls = [
             "S: Velocidades en segmentos",
-            "R: Rutas de camiones",
+            "R: Rutas de camiones", 
+            "Mouse: Información de equipos",
             "ESC: Salir"
         ]
         
         for i, control in enumerate(controls):
             text = tiny_font.render(control, True, (150, 150, 150))
             y_pos = current_height - (len(controls) - i) * 15 - 5
-            self.screen.blit(text, (current_width - 200, y_pos))
+            self.screen.blit(text, (current_width - 220, y_pos))
         
     def handle_input(self, event):
         """Maneja entradas del usuario"""
@@ -442,3 +455,165 @@ class Visualizer:
                 )
         elif event.type == pygame.VIDEORESIZE:
             self.handle_resize(event.size)
+        elif event.type == pygame.MOUSEMOTION:
+            self.mouse_pos = event.pos
+            
+    def _update_mouse_and_tooltips(self):
+        """Actualiza la posición del mouse y detecta objetos para tooltip"""
+        # Solo actualizar mouse_pos si no está establecido manualmente (para testing)
+        current_mouse_pos = pygame.mouse.get_pos()
+        if hasattr(self, '_manual_mouse_override') and self._manual_mouse_override:
+            # Usar la posición manual para testing
+            pass
+        else:
+            self.mouse_pos = current_mouse_pos
+        
+        # Reset tooltip
+        self.tooltip_info = None
+        self.tooltip_target = None
+        
+        # Detectar nodos (equipos)
+        node_radius = max(6, int(self.scale * 8))
+        
+        for name, node in self.sim.map.nodes.items():
+            pos = self._transform_coords(node.x, node.y)
+            distance = ((self.mouse_pos[0] - pos[0]) ** 2 + (self.mouse_pos[1] - pos[1]) ** 2) ** 0.5
+            
+            if distance <= node_radius + 5:  # Un poco de margen para facilitar la interacción
+                self.tooltip_target = name
+                self.tooltip_info = self._get_node_info(name, node)
+                break
+                
+    def _get_node_info(self, name, node):
+        """Obtiene información detallada del nodo para el tooltip"""
+        info = {
+            'title': name.upper(),
+            'type': 'Nodo',
+            'details': []
+        }
+        
+        # Verificar si es un nodo de shovel
+        shovel_nodes = [shovel.node for shovel in self.sim.shovels]
+        if node in shovel_nodes:
+            shovel = next(s for s in self.sim.shovels if s.node == node)
+            info['type'] = f'Pala {shovel.id}'
+            info['details'] = [
+                f'Material: {shovel.material_type}',
+                f'Capacidad: {shovel.ton_per_pass}t por pase',
+                f'Eficiencia: {shovel.efficiency:.0%}',
+                f'Cola: {len(shovel.queue)} camiones',
+                f'Estado: {"Cargando" if shovel.current_truck else "Disponible"}'
+            ]
+            if shovel.current_truck:
+                info['details'].append(f'Camión actual: T{shovel.current_truck.id}')
+                
+        elif node == self.sim.crusher.node:
+            info['type'] = 'Chancadora'
+            info['details'] = [
+                f'Capacidad: 200 t/h',
+                f'Material procesado: {self.sim.crusher.total_processed:.0f}t',
+                f'Cola: {len(self.sim.crusher.queue)} camiones',
+                f'Estado: {"Procesando" if self.sim.crusher.current_truck else "Disponible"}'
+            ]
+            if self.sim.crusher.current_truck:
+                info['details'].append(f'Camión actual: T{self.sim.crusher.current_truck.id}')
+            if self.sim.crusher.total_waste_dumped > 0:
+                info['details'].append(f'⚠️ Desmonte recibido: {self.sim.crusher.total_waste_dumped:.0f}t')
+                
+        elif node == self.sim.dump.node:
+            info['type'] = 'Botadero'
+            info['details'] = [
+                f'Material descargado: {self.sim.dump.total_dumped:.0f}t',
+                f'Cola: {len(self.sim.dump.queue)} camiones',
+                f'Estado: {"Descargando" if self.sim.dump.current_truck else "Disponible"}'
+            ]
+            if self.sim.dump.current_truck:
+                info['details'].append(f'Camión actual: T{self.sim.dump.current_truck.id}')
+            if self.sim.dump.total_mineral_dumped > 0:
+                info['details'].append(f'⚠️ Mineral perdido: {self.sim.dump.total_mineral_dumped:.0f}t')
+                
+        elif name == "parking":
+            info['type'] = 'Estacionamiento'
+            trucks_at_parking = [t for t in self.sim.trucks if t.current_node_name == "parking"]
+            info['details'] = [
+                f'Camiones estacionados: {len(trucks_at_parking)}',
+                'Punto de inicio de operaciones'
+            ]
+            
+        return info
+        
+    def _draw_tooltip(self, small_font, tiny_font):
+        """Dibuja el tooltip con información del equipo"""
+        if not self.tooltip_info:
+            return
+            
+        # Posición del tooltip cerca del mouse
+        tooltip_x = self.mouse_pos[0] + 15
+        tooltip_y = self.mouse_pos[1] - 10
+        
+        # Preparar texto del tooltip
+        title = self.tooltip_info['title']
+        equipment_type = self.tooltip_info['type']
+        details = self.tooltip_info['details']
+        
+        # Calcular dimensiones del tooltip
+        title_surface = small_font.render(title, True, (255, 255, 255))
+        type_surface = tiny_font.render(equipment_type, True, (200, 200, 200))
+        
+        detail_surfaces = []
+        for detail in details:
+            detail_surfaces.append(tiny_font.render(detail, True, (180, 180, 180)))
+        
+        # Calcular ancho máximo
+        max_width = max(
+            title_surface.get_width(),
+            type_surface.get_width(),
+            max([s.get_width() for s in detail_surfaces] + [0])
+        )
+        
+        # Calcular altura total
+        total_height = (title_surface.get_height() + 
+                       type_surface.get_height() + 
+                       sum(s.get_height() for s in detail_surfaces) +
+                       (len(detail_surfaces) + 2) * 3)  # Espaciado
+        
+        # Ajustar posición si se sale de la pantalla
+        screen_width, screen_height = self.screen.get_size()
+        if tooltip_x + max_width + 20 > screen_width:
+            tooltip_x = self.mouse_pos[0] - max_width - 25
+        if tooltip_y + total_height + 20 > screen_height:
+            tooltip_y = self.mouse_pos[1] - total_height - 25
+            
+        # Dibujar fondo del tooltip
+        padding = 10
+        tooltip_rect = pygame.Rect(
+            tooltip_x - padding, 
+            tooltip_y - padding,
+            max_width + 2 * padding, 
+            total_height + 2 * padding
+        )
+        
+        # Fondo con transparencia
+        tooltip_bg = pygame.Surface((tooltip_rect.width, tooltip_rect.height))
+        tooltip_bg.set_alpha(240)
+        tooltip_bg.fill((45, 50, 60))
+        self.screen.blit(tooltip_bg, tooltip_rect)
+        
+        # Borde del tooltip
+        pygame.draw.rect(self.screen, (100, 120, 140), tooltip_rect, 2)
+        
+        # Dibujar texto
+        current_y = tooltip_y
+        
+        # Título
+        self.screen.blit(title_surface, (tooltip_x, current_y))
+        current_y += title_surface.get_height() + 3
+        
+        # Tipo de equipo
+        self.screen.blit(type_surface, (tooltip_x, current_y))
+        current_y += type_surface.get_height() + 5
+        
+        # Detalles
+        for detail_surface in detail_surfaces:
+            self.screen.blit(detail_surface, (tooltip_x, current_y))
+            current_y += detail_surface.get_height() + 2

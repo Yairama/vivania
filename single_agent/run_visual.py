@@ -1,4 +1,8 @@
 # run_visual.py (Actualizado)
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from core.simulation import Simulation
 from core.visualizer import Visualizer
 import pygame
@@ -29,6 +33,10 @@ def run():
                     running = False
                 else:
                     visualizer.handle_input(event)
+            elif event.type == pygame.VIDEORESIZE:
+                visualizer.handle_input(event)
+            elif event.type == pygame.MOUSEMOTION:
+                visualizer.handle_input(event)
 
         sim.update()
         visualizer.draw()
