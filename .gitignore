@@ -179,3 +179,7 @@ training_logs/checkpoints
 training_logs/tb
 *.ipynb
 *.ipynb_checkpoints
+
+# Demo/test screenshots
+*.png
+!/docs/**/*.png
