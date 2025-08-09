@@ -404,6 +404,23 @@ def _calculate_reward(self) -> float:
 
 This repository is part of a comprehensive suite of mining-focused and AI/ML projects. Below are the key repositories developed by [@Yairama](https://github.com/Yairama):
 
+**📊 Portfolio Summary:**
+- 🏭 **Mining & Industrial Systems**: 6 repositories
+- 🤖 **Machine Learning & AI**: 4 repositories  
+- 🎮 **Graphics Engines & Games**: 5 repositories
+- 💼 **Industrial Applications**: 2 repositories
+- 🔬 **Research & Algorithms**: 5 repositories
+- 🌐 **Web & Portfolio**: 2 repositories
+- **Total: 24+ repositories** across multiple domains
+
+### 📑 Quick Navigation
+- [🏭 Mining & Industrial Systems](#️-mining--industrial-systems)
+- [🤖 Machine Learning & AI](#-machine-learning--ai)
+- [🎮 Graphics Engines & Game Development](#-graphics-engines--game-development)
+- [💼 Industrial Applications](#-industrial-applications)
+- [🔬 Research & Algorithms](#-research--algorithms)
+- [🌐 Web & Portfolio](#-web--portfolio)
+
 ### 🏭 Mining & Industrial Systems
 
 #### [SAM-Rock-Fragmentation](https://github.com/Yairama/SAM-Rock-Fragmentation) ⭐ 33 stars
