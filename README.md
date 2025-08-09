@@ -400,6 +400,160 @@ def _calculate_reward(self) -> float:
 - **Episode management**: Termination by production target (400t) or step limit (800)
 - **Reward engineering**: Balance between throughput, efficiency and deadlock prevention
 
+## 🚀 Related Projects
+
+This repository is part of a comprehensive suite of mining-focused and AI/ML projects. Below are the key repositories developed by [@Yairama](https://github.com/Yairama):
+
+### 🏭 Mining & Industrial Systems
+
+#### [SAM-Rock-Fragmentation](https://github.com/Yairama/SAM-Rock-Fragmentation) ⭐ 33 stars
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://github.com/Yairama/SAM-Rock-Fragmentation)
+[![Mining](https://img.shields.io/badge/Mining-⛏️-brown)](https://github.com/Yairama/SAM-Rock-Fragmentation)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/Yairama/SAM-Rock-Fragmentation)
+
+**Advanced Rock Fragmentation Analysis using MetaAI's Segment Anything Model**
+- Implementation of cutting-edge computer vision for mining blast analysis
+- Automated P80 fragmentation calculation from blast imagery
+- Integration of state-of-the-art AI models for industrial applications
+
+#### [3D-Fleet-Management-System](https://github.com/Yairama/3D-Fleet-management-system)
+[![Java](https://img.shields.io/badge/Java-ED8B00?style=flat&logo=openjdk&logoColor=white)](https://github.com/Yairama/3D-Fleet-management-system)
+[![OpenGL](https://img.shields.io/badge/OpenGL-5586A4?style=flat&logo=opengl&logoColor=white)](https://github.com/Yairama/3D-Fleet-management-system)
+[![LWJGL](https://img.shields.io/badge/LWJGL-3.3.1-orange)](https://github.com/Yairama/3D-Fleet-management-system)
+
+**3D Mining Operations Visualizer**
+- Real-time 3D visualization of mining fleet operations
+- Built with Java and LWJGL using OpenGL backend
+- Advanced rendering pipeline for mining equipment simulation
+
+#### [vivania_env](https://github.com/Yairama/vivania_env) | [vivania_learn](https://github.com/Yairama/vivania_learn)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://github.com/Yairama/vivania_env)
+[![RL](https://img.shields.io/badge/Reinforcement%20Learning-FF6B6B)](https://github.com/Yairama/vivania_env)
+[![AI](https://img.shields.io/badge/AI-Enhanced%20Learning-green)](https://github.com/Yairama/vivania_learn)
+
+**AI-Enhanced Mining Fleet Management Environments**
+- Specialized RL environments for mining optimization
+- Deep learning agent training for fleet coordination
+- Advanced AI algorithms for mining operations
+
+### 🤖 Machine Learning & AI
+
+#### [machine_learning_for_mining_industry](https://github.com/Yairama/machine_learning_for_mining_industry)
+[![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat&logo=jupyter&logoColor=white)](https://github.com/Yairama/machine_learning_for_mining_industry)
+[![ML](https://img.shields.io/badge/Machine%20Learning-4285F4)](https://github.com/Yairama/machine_learning_for_mining_industry)
+
+**Comprehensive ML Applications for Mining Industry**
+- Collection of machine learning models and algorithms
+- Industry-specific applications and case studies
+- Jupyter notebooks with practical implementations
+
+#### [Geospatial-Interpolation](https://github.com/Yairama/Geospatial-Interpolation)
+[![Deep Learning](https://img.shields.io/badge/Deep%20Learning-FF4500)](https://github.com/Yairama/Geospatial-Interpolation)
+[![Geology](https://img.shields.io/badge/Geology-8B4513)](https://github.com/Yairama/Geospatial-Interpolation)
+
+**Advanced Geospatial Data Interpolation for Ore Bodies**
+- Neural network-based interpolation techniques
+- Simulated ore body data processing
+- Advanced geological modeling algorithms
+
+#### [alpaca-miner](https://github.com/Yairama/alpaca-miner)
+[![LLM](https://img.shields.io/badge/LLM-Fine%20Tuning-purple)](https://github.com/Yairama/alpaca-miner)
+[![Alpaca](https://img.shields.io/badge/Alpaca-Model-yellow)](https://github.com/Yairama/alpaca-miner)
+
+**Specialized Language Model for Mining Industry**
+- Fine-tuning of Alpaca LLM with mining-specific datasets
+- Domain-specific natural language processing
+- AI assistant for mining operations
+
+### 🎮 Graphics Engines & Game Development
+
+#### [Yamete-Kudasai-Engine](https://github.com/Yairama/Yamete-Kudasai-Engine)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white)](https://github.com/Yairama/Yamete-Kudasai-Engine)
+[![Bevy](https://img.shields.io/badge/Bevy-232326?style=flat&logo=bevy&logoColor=white)](https://github.com/Yairama/Yamete-Kudasai-Engine)
+[![MIT](https://img.shields.io/badge/License-MIT-green)](https://github.com/Yairama/Yamete-Kudasai-Engine)
+
+**Modern Graphics Engine Built with Rust & Bevy**
+- High-performance graphics rendering pipeline
+- ECS-based architecture for optimal performance
+- Cross-platform graphics engine development
+
+#### [voxel_engine](https://github.com/Yairama/voxel_engine)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white)](https://github.com/Yairama/voxel_engine)
+[![Voxel](https://img.shields.io/badge/Voxel%20Engine-3D-blue)](https://github.com/Yairama/voxel_engine)
+
+**Voxel-Based 3D Engine**
+- Block-mesh-rs library integration
+- Efficient voxel rendering algorithms
+- Minecraft-style world generation
+
+#### [breakout_2d](https://github.com/Yairama/breakout_2d) | [pick_the_apple](https://github.com/Yairama/pick_the_apple)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white)](https://github.com/Yairama/breakout_2d)
+[![GDScript](https://img.shields.io/badge/GDScript-478CBF?style=flat&logo=godot-engine&logoColor=white)](https://github.com/Yairama/pick_the_apple)
+
+**Game Development Learning Projects**
+- Classic game implementations
+- Exploring different game engines (Bevy, Godot)
+- Educational game development resources
+
+### 💼 Industrial Applications
+
+#### [sso_platform](https://github.com/Yairama/sso_platform)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://github.com/Yairama/sso_platform)
+[![Safety](https://img.shields.io/badge/Safety-Platform-red)](https://github.com/Yairama/sso_platform)
+
+**Occupational Health and Safety Platform**
+- Complete safety management system
+- Critical controls mapping
+- Mining industry safety compliance
+
+#### [EPPHelper](https://github.com/Yairama/EPPHelper)
+[![Kotlin](https://img.shields.io/badge/Kotlin-0095D5?style=flat&logo=kotlin&logoColor=white)](https://github.com/Yairama/EPPHelper)
+[![Android](https://img.shields.io/badge/Android-3DDC84?style=flat&logo=android&logoColor=white)](https://github.com/Yairama/EPPHelper)
+
+**Personal Protective Equipment Registration App**
+- Mobile application for PPE management
+- Safety compliance tracking
+- Mining industry specialized tools
+
+### 🔬 Research & Algorithms
+
+#### [casos_de_exito_mineria](https://github.com/Yairama/casos_de_exito_mineria)
+[![Research](https://img.shields.io/badge/Research-Documentation-orange)](https://github.com/Yairama/casos_de_exito_mineria)
+
+**Machine Learning Success Cases in Mining (2020-2025)**
+- Comprehensive documentation of ML applications
+- Industry case studies and analysis
+- Research compilation and insights
+
+#### [NicholasMethod](https://github.com/Yairama/NicholasMethod)
+[![Java](https://img.shields.io/badge/Java-ED8B00?style=flat&logo=openjdk&logoColor=white)](https://github.com/Yairama/NicholasMethod)
+[![MIT](https://img.shields.io/badge/License-MIT-green)](https://github.com/Yairama/NicholasMethod)
+
+**Mining Exploitation Method Selection Tool**
+- Implementation of Nicolas method algorithm
+- Java Swing GUI application
+- Mining engineering decision support
+
+#### [pyminerpit](https://github.com/Yairama/pyminerpit) | [mining-deposit-simulation](https://github.com/Yairama/mining-deposit-simulation)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://github.com/Yairama/pyminerpit)
+[![Algorithms](https://img.shields.io/badge/Algorithms-Mining-brown)](https://github.com/Yairama/pyminerpit)
+
+**Mining Algorithms and Simulation Tools**
+- Collection of mining-specific algorithms
+- Deposit simulation and modeling
+- Educational mining engineering resources
+
+### 🌐 Web & Portfolio
+
+#### [yairama.github.io](https://github.com/Yairama/yairama.github.io) | [portfolio](https://github.com/Yairama/portfolio)
+[![CSS](https://img.shields.io/badge/CSS-1572B6?style=flat&logo=css3&logoColor=white)](https://github.com/Yairama/portfolio)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=flat&logo=github&logoColor=white)](https://github.com/Yairama/yairama.github.io)
+
+**Personal Portfolio and Web Presence**
+- GitHub Pages hosted portfolio
+- Professional project showcase
+- Contact and professional information
+
 ---
 
 **FMS Simulator developed as a research platform for mining Fleet Management Systems with complete Reinforcement Learning capabilities.**
