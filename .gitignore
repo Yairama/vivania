@@ -183,3 +183,32 @@ training_logs/tb
 # Demo/test screenshots
 *.png
 !/docs/**/*.png
+
+# Node.js and Next.js
+node_modules/
+.next/
+.env.local
+.env.production
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+out/
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
